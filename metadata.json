@@ -1,0 +1,6 @@
+{
+  "name": "VELRIVA",
+  "description": "Premium Mobile e-Commerce PWA for Velriva dropshipping and reseller startup.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
