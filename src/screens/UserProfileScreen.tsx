@@ -3,7 +3,7 @@ import { useAppState } from '../context/AppContext';
 import { User, ShoppingBag, ShieldCheck, Settings, LogOut, ChevronRight, HelpCircle, Truck, KeySquare } from 'lucide-react';
 
 export const UserProfileScreen: React.FC = () => {
-  const { currentUser, logoutUser, navigateTo, orders } = useAppState();
+  const { currentUser, logoutUser, navigateTo, orders, isAdmin } = useAppState();
 
   const handleStatClick = (tab: 'orders' | 'track') => {
     if (!currentUser.isLoggedIn) {
@@ -68,16 +68,6 @@ export const UserProfileScreen: React.FC = () => {
             className="w-full max-w-xs rounded-2xl bg-slate-950 py-3.5 text-xs font-black text-white hover:bg-slate-900 active:scale-95 transition shadow-md"
           >
             Authenticate Customer Session
-          </button>
-
-          {/* Admin gate link */}
-          <button
-            id="profile-admin-login-redirect"
-            onClick={() => navigateTo('adminLogin')}
-            className="flex items-center gap-1.5 text-[10.5px] font-bold text-slate-400 hover:text-slate-700 pt-4"
-          >
-            <KeySquare className="h-4 w-4" />
-            <span>Staff / Administrator Portal</span>
           </button>
         </div>
       ) : (
@@ -151,22 +141,24 @@ export const UserProfileScreen: React.FC = () => {
           </div>
 
           {/* Admin Area Bridge */}
-          <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-amber-100/50 border border-amber-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="text-xs font-black text-slate-900 uppercase tracking-wide">Developer & Staff Link</h4>
-                <p className="text-[10.5px] text-slate-500 mt-0.5">Control live catalogs, update order status, see graphs</p>
+          {(currentUser?.email === 'velriva7867@gmail.com' || currentUser?.email === 'zainulamaan4@gmail.com' || isAdmin) && (
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-amber-100/50 border border-amber-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-black text-slate-900 uppercase tracking-wide">Developer & Staff Link</h4>
+                  <p className="text-[10.5px] text-slate-500 mt-0.5">Control live catalogs, update order status, see graphs</p>
+                </div>
+                
+                <button
+                  id="profile-admin-gateway"
+                  onClick={() => navigateTo('adminLogin')}
+                  className="rounded-xl bg-slate-950 px-3.5 py-2 text-[10px] font-black text-white hover:bg-slate-900 active:scale-95"
+                >
+                  Entrance Gate
+                </button>
               </div>
-              
-              <button
-                id="profile-admin-gateway"
-                onClick={() => navigateTo('adminLogin')}
-                className="rounded-xl bg-slate-950 px-3.5 py-2 text-[10px] font-black text-white hover:bg-slate-900 active:scale-95"
-              >
-                Entrance Gate
-              </button>
             </div>
-          </div>
+          )}
 
           {/* Sign Out Action */}
           <button

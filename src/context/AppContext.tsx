@@ -56,6 +56,7 @@ interface AppContextType {
   isAdmin: boolean;
   loginAdmin: () => boolean;
   logoutAdmin: () => void;
+  accounts: any[];
   
   // Notifications
   notifications: AppNotification[];
@@ -303,27 +304,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           localStorage.setItem('velriva_accounts', JSON.stringify(mappedAccounts));
         }
 
-        // C. Load completed orders list
-        const { data: dbOrders, error: ordErr } = await supabase
-          .from('orders')
-          .select('*');
-
-        if (!ordErr && dbOrders) {
-          const mappedOrders: Order[] = dbOrders.map((o: any) => ({
-            id: o.id,
-            date: o.date,
-            items: o.items || [],
-            total: Number(o.total),
-            status: o.status,
-            customerEmail: o.customer_email || undefined,
-            shippingAddress: o.shipping_address || {},
-            tracking: o.tracking || []
-          }));
-          setOrders(mappedOrders);
-          localStorage.setItem('velriva_orders', JSON.stringify(mappedOrders));
-        }
-
-        // D. Load active coupons
+        // C. Load active coupons
         const { data: dbCoupons, error: coupErr } = await supabase
           .from('coupons')
           .select('*');
@@ -358,6 +339,47 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return () => clearTimeout(timer);
     }
   }, [toast]);
+
+  // Dynamic state-based orders synchronized from Supabase
+  useEffect(() => {
+    const fetchScopedOrders = async () => {
+      if (!isSupabaseConfigured || !supabase) return;
+      try {
+        let orderQuery = supabase.from('orders').select('*');
+        const isUserAdmin = isAdmin || localStorage.getItem('velriva_admin_logged_in') === 'true';
+        
+        if (!isUserAdmin) {
+          if (currentUser && currentUser.isLoggedIn && currentUser.email) {
+            orderQuery = orderQuery.eq('customer_email', currentUser.email.trim().toLowerCase());
+          } else {
+            setOrders([]);
+            localStorage.setItem('velriva_orders', JSON.stringify([]));
+            return;
+          }
+        }
+
+        const { data: dbOrders, error: ordErr } = await orderQuery;
+        if (!ordErr && dbOrders) {
+          const mappedOrders: Order[] = dbOrders.map((o: any) => ({
+            id: o.id,
+            date: o.date,
+            items: o.items || [],
+            total: Number(o.total),
+            status: o.status,
+            customerEmail: o.customer_email || undefined,
+            shippingAddress: o.shipping_address || {},
+            tracking: o.tracking || []
+          }));
+          setOrders(mappedOrders);
+          localStorage.setItem('velriva_orders', JSON.stringify(mappedOrders));
+        }
+      } catch (err) {
+        console.error("Failed to load/sync scoped orders:", err);
+      }
+    };
+
+    fetchScopedOrders();
+  }, [isAdmin, currentUser?.isLoggedIn, currentUser?.email]);
 
   // Sync state helpers
   const updateAccountData = (email: string, data: { cart?: CartItem[]; wishlist?: string[]; orders?: Order[] }) => {
@@ -1077,6 +1099,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addProduct,
         updateProduct,
         deleteProduct,
+        incrementProductViews,
         cart,
         addToCart,
         removeFromCart,
@@ -1099,10 +1122,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         removeCoupon,
         currentUser,
         loginUser,
+        registerUser,
         logoutUser,
         isAdmin,
         loginAdmin,
         logoutAdmin,
+        accounts,
         notifications,
         markNotificationsAsRead,
         addNotification,

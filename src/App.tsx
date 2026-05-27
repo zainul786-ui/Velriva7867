@@ -49,6 +49,11 @@ const AppContent: React.FC = () => {
 
   // Screen Switch router
   const renderActiveScreen = () => {
+    // Force authentication guard for all regular client workspaces
+    if (!currentUser.isLoggedIn && !['splash', 'login', 'adminLogin', 'adminDashboard'].includes(navigation.currentScreen)) {
+      return <LoginRegisterScreen />;
+    }
+
     switch (navigation.currentScreen) {
       case 'splash':
         return <SplashScreen />;
@@ -92,9 +97,8 @@ const AppContent: React.FC = () => {
 
   const isSplash = navigation.currentScreen === 'splash';
   const hideChrome = isSplash || 
-    ['login', 'adminLogin', 'adminDashboard', 'success'].includes(navigation.currentScreen) || 
-    (navigation.currentScreen === 'profile' && !currentUser.isLoggedIn) || 
-    (navigation.currentScreen === 'orders' && !currentUser.isLoggedIn);
+    (!currentUser.isLoggedIn && !isAdmin) ||
+    ['login', 'adminLogin', 'adminDashboard', 'success'].includes(navigation.currentScreen);
 
   return (
     <div

@@ -3,15 +3,19 @@ import { useAppState } from '../context/AppContext';
 import { motion } from 'motion/react';
 
 export const SplashScreen: React.FC = () => {
-  const { navigateTo } = useAppState();
+  const { navigateTo, currentUser } = useAppState();
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      navigateTo('home');
+      if (currentUser && currentUser.isLoggedIn) {
+        navigateTo('home');
+      } else {
+        navigateTo('login');
+      }
     }, 2500);
 
     return () => clearTimeout(timer);
-  }, [navigateTo]);
+  }, [navigateTo, currentUser]);
 
   return (
     <div

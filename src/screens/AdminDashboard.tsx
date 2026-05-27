@@ -17,17 +17,15 @@ export const AdminDashboard: React.FC = () => {
     updatePromoBanners,
     coupons,
     addCoupon,
-    deleteCoupon
+    deleteCoupon,
+    accounts
   } = useAppState();
 
   // Internal tab choice
   const [activeTab, setActiveTab ] = useState<'analytics' | 'products' | 'orders' | 'marketing' | 'users'>('analytics');
   
-  // Load registered accounts database
-  const [registeredAccounts, setRegisteredAccounts] = useState<any[]>(() => {
-    const stored = localStorage.getItem('velriva_accounts');
-    return stored ? JSON.parse(stored) : [];
-  });
+  // Use live accounts list or fallback
+  const registeredAccounts = accounts && accounts.length > 0 ? accounts : [];
 
   // Selected user account detail drawer/modal state
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
@@ -255,7 +253,7 @@ export const AdminDashboard: React.FC = () => {
             >
               <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 group-hover:text-slate-600 transition">Dropship Revenue</span>
               <h4 className="font-mono text-xl font-black text-slate-950 mt-1">
-                ${orders.reduce((acc, o) => (o.status !== 'Cancelled' ? acc + o.total : acc), 0) + 1280}
+                ${orders.reduce((acc, o) => (o.status !== 'Cancelled' ? acc + o.total : acc), 0)}
               </h4>
               <span className="text-[9.5px] font-bold text-indigo-600 block mt-1">View financial ledgers ➜</span>
             </div>
