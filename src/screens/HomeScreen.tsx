@@ -225,7 +225,7 @@ export const HomeScreen: React.FC = () => {
                 />
                 <div className="overflow-hidden">
                   <h4 className="truncate text-[10px] font-bold text-slate-800">{prod.name}</h4>
-                  <span className="text-[10px] font-extrabold text-[#000]">${prod.price}</span>
+                  <span className="text-[10px] font-extrabold text-[#000]">₹{prod.price}</span>
                 </div>
               </div>
             ))}

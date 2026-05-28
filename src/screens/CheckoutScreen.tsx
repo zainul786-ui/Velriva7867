@@ -173,7 +173,7 @@ export const CheckoutScreen: React.FC = () => {
                 <span className="truncate max-w-[200px]">
                   {item.product.name} <span className="text-slate-400 text-[10px]">x{item.quantity}</span>
                 </span>
-                <span className="font-mono font-bold">${item.product.price * item.quantity}</span>
+                <span className="font-mono font-bold">₹{item.product.price * item.quantity}</span>
               </div>
             ))}
           </div>
@@ -223,17 +223,17 @@ export const CheckoutScreen: React.FC = () => {
           <div className="border-t border-slate-100 pt-2.5 text-xs font-semibold text-slate-500 space-y-1">
             <div className="flex justify-between">
               <span>Cart Subtotal:</span>
-              <span className="font-mono font-bold text-slate-800">${subtotal}</span>
+              <span className="font-mono font-bold text-slate-800">₹{subtotal}</span>
             </div>
             {appliedCoupon && (
               <div className="flex justify-between text-emerald-600">
                 <span>Voucher Discount ({appliedCoupon.discount}%):</span>
-                <span className="font-mono">-${discountAmount}</span>
+                <span className="font-mono">-₹{discountAmount}</span>
               </div>
             )}
             <div className="flex justify-between items-center text-slate-950 font-black text-sm pt-2 border-t border-slate-100">
               <span>Total payable amount:</span>
-              <span className="font-mono text-base text-slate-950 font-black">${finalTotalAmount}</span>
+              <span className="font-mono text-base text-slate-950 font-black">₹{finalTotalAmount}</span>
             </div>
           </div>
         </div>
@@ -378,7 +378,7 @@ export const CheckoutScreen: React.FC = () => {
           className="w-full flex items-center justify-center gap-2 rounded-2xl bg-slate-950 py-4 text-xs font-black text-white hover:bg-slate-900 transition active:scale-95 shadow-md mt-4"
         >
           <Truck className="h-4 w-4" />
-          <span>Place Cash On Delivery Order (${finalTotalAmount})</span>
+          <span>Place Cash On Delivery Order (₹{finalTotalAmount})</span>
         </button>
       </form>
     </div>

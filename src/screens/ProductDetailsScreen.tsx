@@ -215,10 +215,10 @@ export const ProductDetailsScreen: React.FC = () => {
 
         {/* Pricing Layout */}
         <div className="mt-4.5 flex items-baseline gap-2.5">
-          <span className="text-2xl font-black text-slate-950">${product.price}</span>
+          <span className="text-2xl font-black text-slate-950">₹{product.price}</span>
           {product.oldPrice > product.price && (
             <span className="text-xs font-semibold text-slate-400 line-through">
-              ${product.oldPrice}
+              ₹{product.oldPrice}
             </span>
           )}
           <span className="rounded-md bg-emerald-50 px-2 py-0.5 font-sans text-[10px] font-bold text-emerald-600">

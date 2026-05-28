@@ -794,6 +794,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const updatedOrders = [newOrder, ...orders];
     syncOrders(updatedOrders);
+    
+    // Dispatch silent background WhatsApp notification to the configured Admin number
+    const waPayload = {
+      orderId: newOrder.id,
+      customerName: shippingDetails.name || 'Anonymous Reseller',
+      customerPhone: shippingDetails.phone || 'N/A',
+      address: `${shippingDetails.address || ''}, ${shippingDetails.city || ''}, ${shippingDetails.state || ''} - ${shippingDetails.pincode || ''}`,
+      items: newOrder.items,
+      total: newOrder.total,
+      date: newOrder.date,
+      adminPhone: localStorage.getItem('velora_admin_whatsapp_number') || ''
+    };
+
+    fetch('/api/whatsapp/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(waPayload)
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        console.log("Background order WhatsApp alert dispatched successfully!");
+      } else {
+        console.warn("WhatsApp background dispatch notice:", data.error);
+      }
+    })
+    .catch(err => {
+      console.error("Failed to run automatic background WhatsApp notification:", err);
+    });
+
     clearCart();
     setAppliedCoupon(null); // Clear active coupon on order complete
     

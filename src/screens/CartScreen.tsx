@@ -91,7 +91,7 @@ export const CartScreen: React.FC = () => {
                 {/* Pricing & Control row */}
                 <div className="flex items-center justify-between mt-2">
                   <span className="text-sm font-extrabold text-slate-900">
-                    ${item.product.price}
+                    ₹{item.product.price}
                   </span>
 
                   <div className="flex items-center gap-3">
@@ -156,7 +156,7 @@ export const CartScreen: React.FC = () => {
           <div className="mt-5 rounded-3xl bg-slate-50 border border-slate-100 p-4 space-y-2.5 mx-1.5">
             <div className="flex justify-between items-center text-xs">
               <span className="font-bold text-slate-500">Order Subtotal</span>
-              <span className="font-mono font-bold text-slate-800">${subtotal}</span>
+              <span className="font-mono font-bold text-slate-800">₹{subtotal}</span>
             </div>
             <div className="flex justify-between items-center text-xs">
               <span className="font-bold text-slate-500">Delivery Processing (COD)</span>
@@ -167,7 +167,7 @@ export const CartScreen: React.FC = () => {
             
             <div className="flex justify-between items-center text-sm pt-1">
               <span className="font-extrabold text-slate-900">Total Amount Payable</span>
-              <span className="font-mono font-black text-slate-900 text-base">${grandTotal}</span>
+              <span className="font-mono font-black text-slate-900 text-base">₹{grandTotal}</span>
             </div>
           </div>
 
@@ -180,7 +180,7 @@ export const CartScreen: React.FC = () => {
             >
               <div className="text-left font-mono">
                 <span className="text-[10px] text-slate-400 block font-sans tracking-wide">Final price with COD</span>
-                <span>${grandTotal}</span>
+                <span>₹{grandTotal}</span>
               </div>
               
               <div className="flex items-center gap-1 leading-none text-amber-400 font-bold">
@@ -252,7 +252,7 @@ export const CartScreen: React.FC = () => {
 
                   {/* Action elements */}
                   <div className="flex justify-between items-center border-t border-slate-50 pt-2.5 mt-2.5">
-                    <span className="text-xs font-black text-slate-900">Paid Amount: <strong className="font-mono text-slate-950">${order.total}</strong></span>
+                    <span className="text-xs font-black text-slate-900">Paid Amount: <strong className="font-mono text-slate-950">₹{order.total}</strong></span>
                     
                     <button
                       id={`cart-track-order-history-btn-${order.id}`}

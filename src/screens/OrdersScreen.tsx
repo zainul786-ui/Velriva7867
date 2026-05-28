@@ -100,7 +100,7 @@ export const OrdersScreen: React.FC = () => {
 
                 <div className="text-right">
                   <span className="text-[10px] text-slate-400 block leading-none font-medium">Grand Pay Total</span>
-                  <p className="font-mono text-sm font-black text-slate-905 mt-0.5">${order.total}</p>
+                  <p className="font-mono text-sm font-black text-slate-905 mt-0.5">₹{order.total}</p>
                 </div>
               </div>
 

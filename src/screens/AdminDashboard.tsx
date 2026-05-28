@@ -26,8 +26,103 @@ export const AdminDashboard: React.FC = () => {
   } = useAppState();
 
   // Internal tab choice
-  const [activeTab, setActiveTab ] = useState<'analytics' | 'products' | 'orders' | 'marketing' | 'users'>('analytics');
+  const [activeTab, setActiveTab ] = useState<'analytics' | 'products' | 'orders' | 'marketing' | 'users' | 'whatsapp'>('analytics');
   
+  // WhatsApp States
+  const [waStatus, setWaStatus] = useState<'disconnected' | 'connecting' | 'qrcode' | 'connected' | 'loading'>('loading');
+  const [waQr, setWaQr] = useState<string | null>(null);
+  const [waPhoneNumber, setWaPhoneNumber] = useState<string | null>(null);
+  const [waAdminPhone, setWaAdminPhone] = useState(() => {
+    return localStorage.getItem('velora_admin_whatsapp_number') || '919690986010';
+  });
+  const [testMode, setTestMode] = useState(false);
+
+  // Fetch current WhatsApp daemon status from Express backend
+  const fetchWaStatus = async () => {
+    try {
+      const res = await fetch('/api/whatsapp/status');
+      const data = await res.json();
+      if (data) {
+        setWaStatus(data.status || 'disconnected');
+        setWaQr(data.qr || null);
+        setWaPhoneNumber(data.phoneNumber || null);
+      }
+    } catch (err) {
+      console.warn("Failed to check background WhatsApp status:", err);
+    }
+  };
+
+  // Poll WhatsApp server-side state dynamically every 3 seconds only when focusing on the WhatsApp tab
+  React.useEffect(() => {
+    if (activeTab === 'whatsapp') {
+      fetchWaStatus();
+      const interval = setInterval(fetchWaStatus, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [activeTab]);
+
+  const handleSavePhone = () => {
+    localStorage.setItem('velora_admin_whatsapp_number', waAdminPhone.replace(/\D/g, ''));
+    showToast('Admin notification receiver phone number saved!', 'success');
+  };
+
+  const handleWaLogout = async () => {
+    setWaStatus('loading');
+    try {
+      const res = await fetch('/api/whatsapp/logout', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        showToast('WhatsApp logged out and session folder purged.', 'info');
+        fetchWaStatus();
+      }
+    } catch (err) {
+      showToast('Could not delete WhatsApp token session', 'error');
+    }
+  };
+
+  const handleSendTestMessage = async () => {
+    setTestMode(true);
+    showToast('Dispatching background order test message...', 'info');
+    try {
+      const testPayload = {
+        orderId: `VEL-TEST-${Math.floor(100000 + Math.random() * 900000)}`,
+        customerName: 'Amaan Reseller (Test User)',
+        customerPhone: '+91 9690986010',
+        address: 'Delhi Dropship Hub, Sector 12, Block F, Plot 22, Delhi NCR - 110001',
+        items: [
+          {
+            product: { name: 'Premium Active Sound AirPods', price: 2999 },
+            quantity: 2,
+            selectedSize: 'Black Carbon'
+          },
+          {
+            product: { name: 'Super Charging Pod Wireless Grid', price: 999 },
+            quantity: 1,
+            selectedSize: 'Compact Standard'
+          }
+        ],
+        total: 6997,
+        adminPhone: waAdminPhone
+      };
+
+      const res = await fetch('/api/whatsapp/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(testPayload)
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast('Test WhatsApp message delivered in the background!', 'success');
+      } else {
+        showToast(`Could not send: ${data.error || 'Ensure WhatsApp is paired first!'}`, 'error');
+      }
+    } catch (err) {
+      showToast('Background request connection failed', 'error');
+    } finally {
+      setTestMode(false);
+    }
+  };
+
   // Use live accounts list or fallback
   const registeredAccounts = accounts && accounts.length > 0 ? accounts : [];
 
@@ -237,10 +332,28 @@ export const AdminDashboard: React.FC = () => {
           <UserCheck className="h-4 w-4 text-indigo-505 text-indigo-500" />
           <span>Resellers DB ({registeredAccounts.length})</span>
         </button>
+
+        <button
+          id="admin-tab-whatsapp"
+          onClick={() => { setActiveTab('whatsapp'); setDbSearch(''); }}
+          className={`flex items-center gap-1.5 pb-2.5 transition border-b-2 px-3 shrink-0 ${
+            activeTab === 'whatsapp' ? 'border-emerald-600 text-emerald-850 font-extrabold' : 'border-transparent text-slate-400 hover:text-slate-500'
+          }`}
+        >
+          <Smartphone className="h-4 w-4 text-emerald-600" />
+          <span className="flex items-center gap-1">
+            WhatsApp System
+            {waStatus === 'connected' ? (
+              <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+            ) : waStatus === 'qrcode' ? (
+              <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
+            ) : null}
+          </span>
+        </button>
       </div>
 
       {/* 3. Search Bar for Products/Orders lists */}
-      {activeTab !== 'analytics' && activeTab !== 'marketing' && (
+      {activeTab !== 'analytics' && activeTab !== 'marketing' && activeTab !== 'whatsapp' && (
         <div className="px-4 mt-4">
           <div className="relative flex items-center rounded-2xl border border-slate-100 bg-white p-1">
             <Search className="absolute left-4 h-4 w-4 text-slate-400" />
@@ -270,7 +383,7 @@ export const AdminDashboard: React.FC = () => {
             >
               <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 group-hover:text-slate-600 transition">Dropship Revenue</span>
               <h4 className="font-mono text-xl font-black text-slate-950 mt-1">
-                ${orders.reduce((acc, o) => (o.status !== 'Cancelled' ? acc + o.total : acc), 0)}
+                ₹{orders.reduce((acc, o) => (o.status !== 'Cancelled' ? acc + o.total : acc), 0)}
               </h4>
               <span className="text-[9.5px] font-bold text-indigo-600 block mt-1">View financial ledgers ➜</span>
             </div>
@@ -453,7 +566,7 @@ export const AdminDashboard: React.FC = () => {
                   <div className="overflow-hidden">
                     <h4 className="truncate text-xs font-bold text-slate-800">{prod.name}</h4>
                     <div className="flex gap-3 text-[10px] font-bold text-slate-400 mt-1">
-                      <span>Price: <strong className="text-slate-900">${prod.price}</strong></span>
+                      <span>Price: <strong className="text-slate-900">₹{prod.price}</strong></span>
                       <span>Stock: <strong className="text-slate-900">{prod.stock}</strong></span>
                       <span className="uppercase">{prod.category}</span>
                     </div>
@@ -572,7 +685,7 @@ export const AdminDashboard: React.FC = () => {
 
                   <div className="border-t border-slate-50 mt-3 pt-2.5 flex justify-between items-center text-xs">
                     <span className="font-bold text-slate-400">Submission payload sum:</span>
-                    <span className="font-mono font-black text-slate-905 text-sm">${order.total}</span>
+                    <span className="font-mono font-black text-slate-905 text-sm">₹{order.total}</span>
                   </div>
                 </div>
               ))
@@ -1021,7 +1134,7 @@ ALTER TABLE app_settings DISABLE ROW LEVEL SECURITY;`;
 
               <div className="grid grid-cols-2 gap-3.5">
                 <div>
-                  <label className="text-[10px] font-black uppercase text-slate-400 mb-1 block">Final Price ($)</label>
+                  <label className="text-[10px] font-black uppercase text-slate-400 mb-1 block">Final Price (₹)</label>
                   <input
                     id="form-item-price"
                     type="number"
@@ -1033,7 +1146,7 @@ ALTER TABLE app_settings DISABLE ROW LEVEL SECURITY;`;
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black uppercase text-slate-400 mb-1 block">Old Price Comparison ($)</label>
+                  <label className="text-[10px] font-black uppercase text-slate-400 mb-1 block">Old Price Comparison (₹)</label>
                   <input
                     id="form-item-old-price"
                     type="number"
@@ -1218,7 +1331,7 @@ ALTER TABLE app_settings DISABLE ROW LEVEL SECURITY;`;
                       </div>
 
                       <div className="text-right">
-                        <span className="text-[10px] font-mono font-black text-slate-900 block">${lifetimeSpend} spent</span>
+                        <span className="text-[10px] font-mono font-black text-slate-900 block">₹{lifetimeSpend} spent</span>
                         <span className="text-[9.5px] font-bold text-slate-400 block mt-0.5">{userOrders.length} orders placed</span>
                       </div>
                     </div>
@@ -1243,6 +1356,201 @@ ALTER TABLE app_settings DISABLE ROW LEVEL SECURITY;`;
                 );
               })
             )}
+          </div>
+        </div>
+      )}
+
+      {/* TAB F: AUTOMATIC WHATSAPP NOTIFICATION SYSTEM */}
+      {activeTab === 'whatsapp' && (
+        <div className="px-4 mt-5 space-y-4 font-sans text-left">
+          <div className="flex justify-between items-center pb-1">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">WhatsApp Notification Hub</h3>
+            <span className="text-[9.5px] font-extrabold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full flex items-center gap-1 font-bold">
+              <span className={`h-1.5 w-1.5 rounded-full ${waStatus === 'connected' ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+              Auto-Bot Status
+            </span>
+          </div>
+
+          <p className="text-[10px] text-slate-400 font-medium">Configure background WhatsApp alert notifications. When a reseller completes an order, details are pushed automatically to your WhatsApp in the background.</p>
+
+          {/* Recipient Box */}
+          <div className="bg-white border border-slate-100 rounded-[24px] p-5.5 space-y-4 shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center font-bold">
+                📱
+              </div>
+              <div>
+                <h4 className="text-xs font-extrabold text-slate-900 leading-none">Receiver WhatsApp Number</h4>
+                <p className="text-[9.5px] text-slate-400 mt-1 leading-none font-medium">Where background order summaries should be delivered</p>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-sans text-xs font-bold font-mono">
+                  +
+                </span>
+                <input
+                  id="wa-recipient-phone-input"
+                  type="text"
+                  value={waAdminPhone}
+                  onChange={(e) => setWaAdminPhone(e.target.value.replace(/\D/g, ''))}
+                  placeholder="e.g. 919690986010 (with country code)"
+                  className="w-full pl-6.5 pr-3 py-2.5 bg-slate-50 border border-slate-100/90 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-hidden focus:bg-white focus:ring-1 focus:ring-slate-900 transition"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={handleSavePhone}
+                className="bg-slate-950 hover:bg-slate-900 active:scale-95 text-white font-extrabold text-[10.5px] rounded-xl px-4 transition"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+
+          {/* QR Code Scan Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            {/* Left box: Connection Status & Controller */}
+            <div className="bg-white border border-slate-100 rounded-[24px] p-5.5 flex flex-col justify-between shadow-xs">
+              <div className="space-y-3.5">
+                <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">Connection Health</span>
+                
+                {waStatus === 'connected' && (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2.5 text-emerald-600 font-bold text-xs bg-emerald-50/50 p-3 rounded-2xl border border-emerald-100/85">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
+                      <span>CONNECTED TO WHATSAPP</span>
+                    </div>
+
+                    <div className="text-[11px] font-medium text-slate-650 text-slate-600 space-y-1 text-left">
+                      <p>• Connected with: <strong className="font-mono text-slate-900 font-bold">+{waPhoneNumber}</strong></p>
+                      <p>• Ready state: <span className="font-bold text-emerald-600">Idle & Listening</span></p>
+                      <p>• API delivery rate: <span className="font-bold text-slate-900 font-mono">Free / Unlimited</span></p>
+                    </div>
+                  </div>
+                )}
+
+                {waStatus === 'qrcode' && (
+                  <div className="space-y-3 text-left">
+                    <div className="flex items-center gap-2.5 text-amber-600 font-bold text-xs bg-amber-50 p-3 rounded-2xl border border-amber-100/80">
+                      <span className="h-2.5 w-2.5 rounded-full bg-amber-400 animate-pulse" />
+                      <span>AWAITING LINK DISPATCH</span>
+                    </div>
+                    <p className="text-[10px] text-slate-450 text-slate-400 font-medium leading-relaxed">
+                      WhatsApp pairing token generated. Open <strong className="text-slate-800">WhatsApp</strong> on your phone ➜ Tap <strong className="text-slate-800">Settings / Linked Devices</strong> ➜ Scan the QR code displayed on the right.
+                    </p>
+                  </div>
+                )}
+
+                {waStatus === 'connecting' && (
+                  <div className="space-y-3 text-left">
+                    <div className="flex items-center gap-2 text-indigo-600 font-bold text-xs bg-indigo-50 p-3 rounded-2xl border border-indigo-100/80">
+                      <span className="h-2 w-2 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin font-bold" />
+                      <span>INITIALIZING PROCESSOR...</span>
+                    </div>
+                    <p className="text-[10px] text-slate-450 text-slate-450 font-medium leading-relaxed">
+                      Connecting with WhatsApp socket. If QR code does not show, please wait a moment.
+                    </p>
+                  </div>
+                )}
+
+                {waStatus === 'disconnected' && (
+                  <div className="space-y-3 text-left">
+                    <div className="flex items-center gap-2 text-slate-600 font-bold text-xs bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                      <span>⚪ BLOCK STATUS: INACTIVE</span>
+                    </div>
+                    <p className="text-[10px] text-slate-450 text-slate-400 font-medium leading-relaxed">
+                      Automatic notifications are inactive. Please link a WhatsApp account by scanning the pairing code block to resume message dispatches.
+                    </p>
+                  </div>
+                )}
+
+                {waStatus === 'loading' && (
+                  <div className="flex items-center justify-center p-8">
+                    <div className="h-5 w-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                )}
+              </div>
+
+              {/* Action buttons (Test, Reset) */}
+              <div className="mt-6 flex flex-col gap-2 pt-4 border-t border-slate-50">
+                {waStatus === 'connected' && (
+                  <button
+                    type="button"
+                    disabled={testMode}
+                    onClick={handleSendTestMessage}
+                    className="w-full flex items-center justify-center gap-1.5 py-2.5 text-[10.5px] font-black rounded-xl bg-slate-950 hover:bg-slate-900 active:scale-95 text-white shadow-xs disabled:opacity-50 transition"
+                  >
+                    <span>⚡ Send Test Order Message</span>
+                  </button>
+                )}
+
+                {(waStatus === 'connected' || waStatus === 'qrcode') && (
+                  <button
+                    type="button"
+                    onClick={handleWaLogout}
+                    className="w-full py-2.5 text-[10.5px] font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 active:scale-95 transition"
+                  >
+                    Disconnect Session
+                  </button>
+                )}
+                
+                {waStatus === 'disconnected' && (
+                  <button
+                    type="button"
+                    onClick={fetchWaStatus}
+                    className="w-full py-2.5 text-[10.5px] font-black rounded-xl bg-slate-950 hover:bg-slate-900 text-white active:scale-95 transition"
+                  >
+                    Fetch QR Pairing Code
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Right box: Pairing code viewport */}
+            <div className="bg-white border border-slate-100 rounded-[24px] p-5.5 flex flex-col items-center justify-center text-center shadow-xs min-h-[260px]">
+              {waStatus === 'connected' ? (
+                <div className="space-y-4 py-8">
+                  <div className="mx-auto h-16 w-16 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 border border-emerald-100 shadow-sm">
+                    <Check className="h-8 w-8 text-emerald-600 stroke-[3]" />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-black text-slate-900">Automation Mode Active</h5>
+                    <p className="text-[10px] text-slate-400 mt-1 leading-relaxed max-w-[190px] mx-auto">
+                      All checkout records are silently tracked and reported. Keep this connected to run automatic notifications.
+                    </p>
+                  </div>
+                </div>
+              ) : waStatus === 'qrcode' && waQr ? (
+                <div className="space-y-4">
+                  <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Scan with WhatsApp Link Device</span>
+                  <div className="relative p-1.5 border border-slate-100 bg-slate-50/50 rounded-3xl inline-block shadow-sm">
+                    <img 
+                      src={waQr} 
+                      alt="WhatsApp Web Pairing Setup QR" 
+                      className="w-48 h-48 rounded-2xl block object-contain"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute inset-0 rounded-3xl border-2 border-emerald-500 animate-pulse pointer-events-none" />
+                  </div>
+                  <span className="text-[9px] font-bold text-slate-400 block animate-pulse">
+                    🟢 Refreshing live authentication token...
+                  </span>
+                </div>
+              ) : (
+                <div className="space-y-3.5 py-12 flex flex-col items-center justify-center">
+                  <div className="h-10 w-10 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                  <div>
+                    <span className="text-[10px] font-black text-slate-500 block">Waiting for background service</span>
+                    <p className="text-[9px] text-slate-400 mt-1 max-w-[150px] leading-relaxed">
+                      Establishing connection with WhatsApp Web socket...
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -1301,7 +1609,7 @@ ALTER TABLE app_settings DISABLE ROW LEVEL SECURITY;`;
                   <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3">
                     <span className="text-[9px] text-slate-500 font-bold block uppercase leading-none">Lifetime Spend</span>
                     <span className="font-mono text-base font-black text-emerald-700 block mt-1.5">
-                      ${orders.filter(o => o.customerEmail?.toLowerCase() === selectedUser.email.toLowerCase() && o.status !== 'Cancelled').reduce((sum, o) => sum + o.total, 0)}
+                      ₹{orders.filter(o => o.customerEmail?.toLowerCase() === selectedUser.email.toLowerCase() && o.status !== 'Cancelled').reduce((sum, o) => sum + o.total, 0)}
                     </span>
                   </div>
                   <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-3">
@@ -1347,17 +1655,17 @@ ALTER TABLE app_settings DISABLE ROW LEVEL SECURITY;`;
                               <div className="flex-1 min-w-0 font-medium">
                                 <p className="truncate text-slate-800 font-bold text-left">{it.product.name}</p>
                                 <p className="text-[10px] text-slate-400 font-bold text-left">
-                                  Qty: {it.quantity} | Size: {it.selectedSize || 'N/A'} | Price: ${it.product.price}
+                                  Qty: {it.quantity} | Size: {it.selectedSize || 'N/A'} | Price: ₹{it.product.price}
                                 </p>
                               </div>
-                              <span className="font-mono text-xs font-bold text-slate-800 shrink-0">${it.product.price * it.quantity}</span>
+                              <span className="font-mono text-xs font-bold text-slate-800 shrink-0">₹{it.product.price * it.quantity}</span>
                             </div>
                           ))}
                         </div>
 
                         <div className="flex justify-between items-center text-[11px] font-bold border-t border-slate-100 pt-1.5 mt-1">
                           <span className="text-slate-400">{o.date}</span>
-                          <span className="font-mono font-black text-slate-900">Charged: ${o.total}</span>
+                          <span className="font-mono font-black text-slate-900">Charged: ₹{o.total}</span>
                         </div>
                       </div>
                     ))}

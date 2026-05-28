@@ -93,10 +93,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
         {/* Price list */}
         <div className="mt-2.5 flex items-baseline gap-2">
-          <span className="text-sm font-extrabold text-slate-950">${product.price}</span>
+          <span className="text-sm font-extrabold text-slate-950">₹{product.price}</span>
           {product.oldPrice > product.price && (
             <span className="text-[11px] font-medium text-slate-400 line-through">
-              ${product.oldPrice}
+              ₹{product.oldPrice}
             </span>
           )}
         </div>
