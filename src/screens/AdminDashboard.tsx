@@ -697,6 +697,59 @@ export const AdminDashboard: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {/* Supabase SQL Instructions Integration to help Admin run table initialization */}
+            <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4 space-y-3">
+              <div className="flex items-start gap-2.5">
+                <span className="text-base">💡</span>
+                <div>
+                  <h4 className="text-[11px] font-extrabold text-blue-950 uppercase tracking-wide">
+                    Supabase Setup Instruction (Required)
+                  </h4>
+                  <p className="text-[10px] text-blue-800 leading-relaxed mt-1">
+                    To save and show this Logo permanently for all visitors, go to your <strong className="text-blue-950">Supabase Dashboard</strong>, open the <strong className="text-blue-950">SQL Editor</strong>, paste this query and click <strong className="text-blue-950">Run</strong>:
+                  </p>
+                </div>
+              </div>
+
+              {/* Read-only Query code container */}
+              <div className="relative">
+                <pre className="text-[9px] font-mono bg-slate-900 text-slate-100 p-3.5 rounded-xl block max-w-full overflow-x-auto leading-relaxed border border-slate-950 select-all whitespace-pre-wrap">
+{`CREATE TABLE IF NOT EXISTS app_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Turn off RLS restrictions for settings configuration so that it updates from Admin
+ALTER TABLE app_settings DISABLE ROW LEVEL SECURITY;`}
+                </pre>
+                
+                <button
+                  type="button"
+                  onClick={() => {
+                    const sqlText = `CREATE TABLE IF NOT EXISTS app_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Turn off RLS restrictions for settings configuration so that it updates from Admin
+ALTER TABLE app_settings DISABLE ROW LEVEL SECURITY;`;
+                    navigator.clipboard.writeText(sqlText);
+                    showToast('SQL Script copied to clipboard!', 'success');
+                  }}
+                  className="absolute right-2.5 top-2.5 bg-white/10 hover:bg-white/20 active:scale-95 text-white/90 rounded-lg px-2 py-1 text-[8px] font-bold uppercase transition"
+                >
+                  Copy SQL code
+                </button>
+              </div>
+
+              <div className="flex items-center gap-1 text-[9.5px] font-bold text-blue-900">
+                <span>🔄</span>
+                <span>Once the table is created, logos will instantly sync & save to Supabase permanently.</span>
+              </div>
+            </div>
           </div>
           
           {/* Section 1: Promo Banners Management */}

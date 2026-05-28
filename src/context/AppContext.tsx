@@ -151,10 +151,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return localStorage.getItem('velora_logo') || '';
   });
 
-  const updateLogo = (base64OrUrl: string) => {
+  const updateLogo = async (base64OrUrl: string) => {
     setLogo(base64OrUrl);
     localStorage.setItem('velora_logo', base64OrUrl);
-    showToast('Brand Logan updated successfully!', 'success');
+    
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { error } = await supabase
+          .from('app_settings')
+          .upsert({ key: 'logo', value: base64OrUrl }, { onConflict: 'key' });
+        
+        if (error) {
+          console.warn("Failed to sync logo to Supabase table app_settings:", error.message);
+          showToast('Saved locally. Please run the SQL script in Supabase!', 'error');
+        } else {
+          showToast('Brand Logo synced to Supabase!', 'success');
+        }
+      } catch (err: any) {
+        console.warn("Supabase logo write failed:", err);
+        showToast('Saved locally. Please run the SQL script in Supabase!', 'error');
+      }
+    } else {
+      showToast('Brand Logo updated (Local/Offline mode)!', 'success');
+    }
   };
 
   // Load initial data from localStorage on Mount
@@ -346,6 +365,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           }));
           setCoupons(mappedCoupons);
           localStorage.setItem('velriva_coupons', JSON.stringify(mappedCoupons));
+        }
+
+        // D. Load branding app settings (Custom Logo) securely from brand settings table
+        try {
+          const { data: logoSetting, error: logoErr } = await supabase
+            .from('app_settings')
+            .select('*')
+            .eq('key', 'logo')
+            .maybeSingle();
+
+          if (!logoErr && logoSetting && logoSetting.value) {
+            setLogo(logoSetting.value);
+            localStorage.setItem('velora_logo', logoSetting.value);
+          }
+        } catch (logoCatch) {
+          console.warn("Logo load from app_settings failed. Schema might not exist yet.", logoCatch);
         }
       } catch (err) {
         console.warn("Failed to load initial Supabase data:", err);
