@@ -15,7 +15,7 @@ export const WhatsAppButton: React.FC = () => {
   const handleWhatsAppAction = () => {
     // Generate preset text, opens WhatsApp web
     const presetText = encodeURIComponent(
-      'Hello VELRIVA dropshipping reseller support! I am looking for details about the latest trending inventory.'
+      'Hello VELORA dropshipping reseller support! I am looking for details about the latest trending inventory.'
     );
     window.open(`https://wa.me/919690986010?text=${presetText}`, '_blank');
   };

@@ -1,25 +1,46 @@
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../context/AppContext';
-import { Truck, CheckCircle2, ShieldCheck, ShoppingBag } from 'lucide-react';
+import { Truck, CheckCircle2, ShieldCheck, ShoppingBag, MapPin, Loader2 } from 'lucide-react';
 
 export const CheckoutScreen: React.FC = () => {
-  const { cart, placeOrder, navigateTo, currentUser, appliedCoupon, applyCoupon, removeCoupon } = useAppState();
+  const { cart, placeOrder, navigateTo, currentUser, appliedCoupon, applyCoupon, removeCoupon, showToast } = useAppState();
 
   const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
 
   // Voucher inputs state
   const [couponInput, setCouponInput] = useState('');
 
-  // Address fields state
-  const [formData, setFormData] = useState({
-    name: currentUser.name || '',
-    phone: currentUser.phone || '',
-    address: '',
-    city: '',
-    state: '',
-    pincode: '',
+  // Address fields state (loaded from persistent disk storage to make checkout instant)
+  const [formData, setFormData] = useState(() => {
+    const saved = localStorage.getItem('velriva_saved_address');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') {
+          return {
+            name: parsed.name || currentUser.name || '',
+            phone: parsed.phone || currentUser.phone || '',
+            address: parsed.address || '',
+            city: parsed.city || '',
+            state: parsed.state || '',
+            pincode: parsed.pincode || '',
+          };
+        }
+      } catch (e) {
+        // Fallback
+      }
+    }
+    return {
+      name: currentUser.name || '',
+      phone: currentUser.phone || '',
+      address: '',
+      city: '',
+      state: '',
+      pincode: '',
+    };
   });
 
+  const [geoLoading, setGeoLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   const discountRate = appliedCoupon ? appliedCoupon.discount : 0;
@@ -33,9 +54,78 @@ export const CheckoutScreen: React.FC = () => {
     }
   }, [cart, navigateTo]);
 
+  // Save address details instantly to local state storage so user is remembered
+  useEffect(() => {
+    localStorage.setItem('velriva_saved_address', JSON.stringify(formData));
+  }, [formData]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     if (errorMsg) setErrorMsg('');
+  };
+
+  const handleGetLiveLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser software.");
+      return;
+    }
+    setGeoLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=en`,
+            {
+              headers: {
+                'Accept': 'application/json',
+                'User-Agent': 'VelrivaApplicationApplet'
+              }
+            }
+          );
+          if (!response.ok) {
+            throw new Error("Reverse geocoding HTTP request failure");
+          }
+          const data = await response.json();
+          if (data && data.address) {
+            const addr = data.address;
+            const road = addr.road || addr.suburb || addr.neighbourhood || '';
+            const house = addr.house_number || '';
+            const streetAddress = [house, road, addr.suburb].filter(Boolean).join(', ') || data.display_name;
+            
+            setFormData(prev => ({
+              ...prev,
+              address: streetAddress,
+              city: addr.city || addr.town || addr.village || addr.county || '',
+              state: addr.state || addr.region || '',
+              pincode: addr.postcode || '',
+            }));
+            showToast('GPS details gathered and field addresses populated!', 'success');
+          } else {
+            setFormData(prev => ({
+              ...prev,
+              address: `GPS Lat: ${latitude.toFixed(6)}, Lon: ${longitude.toFixed(6)}`,
+            }));
+            showToast('GPS coordinates acquired.', 'success');
+          }
+        } catch (err) {
+          console.error("Nominatim reverse lookup failed", err);
+          setFormData(prev => ({
+            ...prev,
+            address: `Coordinates: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+          }));
+          showToast('GPS coordinates mapped directly.', 'success');
+        } finally {
+          setGeoLoading(false);
+        }
+      },
+      (error) => {
+        console.error(error);
+        alert("Please enable or choose high-accuracy location access in browser coordinates settings.");
+        setGeoLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
   };
 
   const handlePlaceOrder = (e: React.FormEvent) => {
@@ -158,6 +248,36 @@ export const CheckoutScreen: React.FC = () => {
 
         {/* Inputs */}
         <div className="space-y-3.5">
+          {/* Geolocation trigger */}
+          <div className="flex items-center justify-between bg-indigo-50/50 border border-indigo-100/50 p-3 rounded-2xl mb-1">
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-indigo-600" />
+              <div className="leading-tight">
+                <span className="text-[11px] font-extrabold text-slate-800 block">Auto-fill Delivery Address?</span>
+                <span className="text-[9px] font-bold text-slate-400 block">Detects high-accuracy live GPS location</span>
+              </div>
+            </div>
+            <button
+              id="checkout-gps-auto-btn"
+              type="button"
+              disabled={geoLoading}
+              onClick={handleGetLiveLocation}
+              className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white rounded-xl text-[10.5px] font-black transition active:scale-95 cursor-pointer shadow-sm shrink-0"
+            >
+              {geoLoading ? (
+                <>
+                  <Loader2 className="h-3 w-3 animate-spin-slow" style={{ animationDuration: '2s' }} />
+                  <span>Locating...</span>
+                </>
+              ) : (
+                <>
+                  <MapPin className="h-3 w-3" />
+                  <span>Detect Location</span>
+                </>
+              )}
+            </button>
+          </div>
+
           <div>
             <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Customer Full Name</label>
             <input
@@ -248,7 +368,7 @@ export const CheckoutScreen: React.FC = () => {
         {/* Security Seals */}
         <div className="pt-2 flex items-center gap-2 text-[10px] font-bold text-slate-500">
           <ShieldCheck className="h-4 w-4 text-emerald-500" />
-          <span>VELRIVA Buyer Protection policy enforced</span>
+          <span>VELORA Buyer Protection policy enforced</span>
         </div>
 
         {/* Checkout Place Order action Button */}

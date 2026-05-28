@@ -26,35 +26,16 @@ export const BottomNavigation: React.FC = () => {
       isActive: currentScreen === 'categories',
     },
     {
-      id: 'wishlist' as ScreenName,
-      label: 'Wishlist',
-      icon: Heart,
-      isActive: currentScreen === 'wishlist',
-      badge: wishCount,
-    },
-    {
       id: 'cart' as ScreenName,
       label: 'Cart',
       icon: ShoppingCart,
       isActive: currentScreen === 'cart',
       badge: cartCount,
     },
-    {
-      id: 'profile' as ScreenName,
-      label: 'Profile',
-      icon: User,
-      // Active for user section
-      isActive: ['profile', 'orders', 'trackOrder', 'settings', 'login'].includes(currentScreen),
-    },
   ];
 
   const handleTabClick = (tabId: ScreenName) => {
-    // Navigate straight to the screen
-    if (tabId === 'profile') {
-      navigateTo('profile');
-    } else {
-      navigateTo(tabId);
-    }
+    navigateTo(tabId);
   };
 
   // Do not show bottom nav on splash or admin screens to emulate native feel!

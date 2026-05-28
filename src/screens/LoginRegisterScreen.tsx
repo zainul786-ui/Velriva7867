@@ -1,12 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppState } from '../context/AppContext';
 import { Mail, Phone, Lock, User, Sparkles, ArrowRight, ArrowLeft } from 'lucide-react';
 
 export const LoginRegisterScreen: React.FC = () => {
-  const { loginUser, registerUser, navigateTo } = useAppState();
+  const { loginUser, registerUser, navigateTo, logo } = useAppState();
 
   const [logoClicks, setLogoClicks] = useState(0);
-  const [isRegister, setIsRegister] = useState(false);
+  const [isRegister, setIsRegister] = useState(() => {
+    // Show premium registration context for first-time visitors, login for returning visitors
+    const hasVisited = localStorage.getItem('velora_has_visited');
+    return hasVisited !== 'true';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('velora_has_visited', 'true');
+  }, []);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -86,12 +94,16 @@ export const LoginRegisterScreen: React.FC = () => {
         <div className="text-center">
           <div
             onClick={handleLogoClick}
-            className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-950 font-black text-amber-400 text-xl shadow-xl hover:scale-105 active:scale-95 transition cursor-pointer select-none"
+            className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-950 font-black text-amber-400 text-xl shadow-xl hover:scale-105 active:scale-95 transition cursor-pointer select-none overflow-hidden p-0"
           >
-            VR
+            {logo ? (
+              <img src={logo} className="h-full w-full object-cover" referrerPolicy="no-referrer" alt="Velora Logo" />
+            ) : (
+              <span>VL</span>
+            )}
           </div>
           <h2 className="text-2xl font-black text-slate-900 mt-5 tracking-tight">
-            {isRegister ? 'Create Reseller Account' : 'Welcome to VELRIVA'}
+            {isRegister ? 'Create Reseller Account' : 'Welcome to VELORA'}
           </h2>
           <p className="text-xs text-slate-500 max-w-[260px] mx-auto mt-1.5 leading-relaxed">
             {isRegister

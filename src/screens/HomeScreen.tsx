@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppState } from '../context/AppContext';
 import { ProductCard } from '../components/ProductCard';
 import { CATEGORIES } from '../data/mockData';
-import { Flame, Clock, Sparkles, TrendingUp, ShieldCheck, Heart, ArrowRight } from 'lucide-react';
+import { Flame, Clock, Sparkles, TrendingUp, ShieldCheck, Heart, ArrowRight, Instagram, Youtube, Mail } from 'lucide-react';
 
 export const HomeScreen: React.FC = () => {
   const { products, navigateTo, recentlyViewed, promoBanners } = useAppState();
@@ -154,7 +154,7 @@ export const HomeScreen: React.FC = () => {
             <ShieldCheck className="h-5 w-5 text-white" />
           </div>
           <div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-[#059669]">VELRIVA Dropship Trust</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-[#059669]">VELORA Dropship Trust</span>
             <h4 className="text-xs font-bold text-slate-900 mt-0.5">100% Cash On Delivery Available</h4>
             <p className="text-[10.5px] text-slate-500 mt-1 leading-relaxed">
               Verify your package at your doorstep before payment. Zero card or cash deposits required to fulfill orders.
@@ -245,6 +245,63 @@ export const HomeScreen: React.FC = () => {
             <ProductCard key={prod.id} product={prod} />
           ))}
         </div>
+      </div>
+
+      {/* 9. Official Brand Community & Support Hub */}
+      <div className="mx-4 mt-8 mb-4 rounded-[24px] border border-slate-150 bg-white p-5 shadow-xs">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="h-1.5 w-1.5 rounded-full bg-[#10b981] animate-ping" />
+          <h3 className="text-[11px] font-black uppercase tracking-wider text-slate-400">Connect &amp; Support Hub</h3>
+        </div>
+        <h4 className="text-sm font-black text-slate-900">VELORA Reseller Socials</h4>
+        <p className="text-[10.5px] text-slate-500 mt-1 leading-relaxed">
+          Connect with our central support, explore training videos, or message us directly on Instagram for quick reseller queries.
+        </p>
+
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          <a
+            href="https://www.instagram.com/velora_store.786?igsh=MWJlbzVjOG96aWFzMg=="
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex flex-col items-center justify-center py-3 px-1 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100/70 hover:border-slate-300 transition active:scale-95 cursor-pointer text-center"
+          >
+            <Instagram className="h-5 w-5 text-pink-600" />
+            <span className="text-[10px] font-black text-slate-800 mt-2">Instagram</span>
+            <span className="text-[8px] text-slate-400 font-bold mt-0.5 truncate max-w-full">@velora_store</span>
+          </a>
+
+          <a
+            href="https://youtube.com/@velriva?si=je8rcw_kLp1s7BdE"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex flex-col items-center justify-center py-3 px-1 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100/70 hover:border-slate-300 transition active:scale-95 cursor-pointer text-center"
+          >
+            <Youtube className="h-5 w-5 text-red-600" />
+            <span className="text-[10px] font-black text-slate-800 mt-2">YouTube</span>
+            <span className="text-[8px] text-slate-400 font-bold mt-0.5 truncate max-w-full">@velriva</span>
+          </a>
+
+          <a
+            href="mailto:velora068@gmail.com"
+            className="flex flex-col items-center justify-center py-3 px-1 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100/70 hover:border-slate-300 transition active:scale-95 cursor-pointer text-center"
+          >
+            <Mail className="h-5 w-5 text-indigo-600" />
+            <span className="text-[10px] font-black text-slate-800 mt-2">Gmail support</span>
+            <span className="text-[8px] text-slate-400 font-bold mt-0.5 truncate max-w-full">velora068</span>
+          </a>
+        </div>
+
+        {/* Dynamic WhatsApp direct helpline pill */}
+        <button
+          onClick={() => {
+            const text = encodeURIComponent('Hello VELORA dropshipping support! I am looking for details about the latest trending inventory.');
+            window.open(`https://wa.me/919690986010?text=${text}`, '_blank');
+          }}
+          className="w-full mt-3 py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[11px] tracking-wide uppercase transition active:scale-[0.98] cursor-pointer shadow-xs flex items-center justify-center gap-2"
+        >
+          <span>Direct Whatsapp Support</span>
+          <span className="text-xs">⚡</span>
+        </button>
       </div>
     </div>
   );

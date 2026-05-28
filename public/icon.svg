@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Deep royal velvet radial background -->
+    <radialGradient id="royalBg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0a142c" />
+      <stop offset="60%" stop-color="#050b1a" />
+      <stop offset="100%" stop-color="#02040a" />
+    </radialGradient>
+
+    <!-- Metallic Gold Gradient -->
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFF2CA" />
+      <stop offset="25%" stop-color="#D4AF37" />
+      <stop offset="50%" stop-color="#AA7C11" />
+      <stop offset="75%" stop-color="#D4AF37" />
+      <stop offset="100%" stop-color="#FFF2CA" />
+    </linearGradient>
+
+    <!-- Soft Golden Reflection Gradient -->
+    <linearGradient id="goldGlow" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#AA7C11" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#FFF2CA" stop-opacity="0.2" />
+    </linearGradient>
+
+    <!-- Metallic Silver/Chrome Gradient -->
+    <linearGradient id="silverGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#cbd5e1" />
+      <stop offset="35%" stop-color="#f1f5f9" />
+      <stop offset="50%" stop-color="#94a3b8" />
+      <stop offset="70%" stop-color="#f8fafc" />
+      <stop offset="100%" stop-color="#475569" />
+    </linearGradient>
+
+    <!-- Drop Shadow for 3D depth -->
+    <filter id="dropShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000000" flood-opacity="0.6" />
+    </filter>
+
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="5" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <!-- Curved Text Paths -->
+    <!-- Top arc: left-to-right over the top (clockwise) -->
+    <path id="textPathTop" d="M 96 256 A 160 160 0 0 1 416 256" fill="none" />
+    <!-- Bottom arc: left-to-right under the bottom (clockwise, starting from bottom left) -->
+    <!-- To prevent upside down text, we can use a counter-clockwise path but start right-to-left, or standard left-to-right but reversed textPath. Let's make an arc for the bottom: M 116 256 A 140 140 0 0 0 396 256 -->
+    <path id="textPathBottom" d="M 106 256 A 150 150 0 0 0 406 256" fill="none" />
+  </defs>
+
+  <!-- 1. Background disc with luxurious velvet texture appearance -->
+  <rect width="512" height="512" rx="128" fill="url(#royalBg)" />
+
+  <!-- 2. Ambient light ring -->
+  <circle cx="256" cy="256" r="235" fill="none" stroke="url(#goldGrad)" stroke-width="2" opacity="0.3" />
+
+  <!-- 3. Outer Premium Gold Medal Rim -->
+  <circle cx="256" cy="256" r="224" fill="none" stroke="url(#goldGrad)" stroke-width="9" filter="url(#dropShadow)" />
+  <circle cx="256" cy="256" r="217" fill="none" stroke="#050b1a" stroke-width="3" />
+  <circle cx="256" cy="256" r="214" fill="none" stroke="url(#goldGrad)" stroke-width="2" opacity="0.8" />
+
+  <!-- Inner Gold Boundary Ring -->
+  <circle cx="256" cy="256" r="146" fill="none" stroke="url(#goldGrad)" stroke-width="6" />
+  <circle cx="256" cy="256" r="143" fill="none" stroke="#02040a" stroke-width="1.5" />
+
+  <!-- 4. Embossed VIP CORPORATE Text along top path -->
+  <text font-family="'Inter', 'Space Grotesk', system-ui, sans-serif" font-weight="900" font-size="21" letter-spacing="4" fill="url(#goldGrad)">
+    <textPath href="#textPathTop" startOffset="50%" text-anchor="middle">
+      VIP CORPORATE
+    </textPath>
+  </text>
+
+  <!-- 5. Embossed VELORA Text along bottom path -->
+  <!-- We want it to curve nicely on the bottom of the coin -->
+  <text font-family="'Inter', 'Space Grotesk', system-ui, sans-serif" font-weight="900" font-size="34" letter-spacing="9" fill="url(#goldGrad)">
+    <textPath href="#textPathBottom" startOffset="50%" text-anchor="middle">
+      VELORA
+    </textPath>
+  </text>
+
+  <!-- 6. Central Brand Shield / Winged Emblem -->
+  <!-- Left wing polygon set -->
+  <g filter="url(#dropShadow)">
+    <!-- Right Wing components -->
+    <path d="M 256 142 L 315 220 L 388 190 L 350 250 L 384 275 L 320 292 L 256 340 Z" fill="url(#goldGrad)" opacity="0.9" />
+    <!-- Left Wing components -->
+    <path d="M 256 142 L 197 220 L 124 190 L 162 250 L 128 275 L 192 292 L 256 340 Z" fill="url(#goldGrad)" opacity="0.9" />
+
+    <!-- inner wing details / accent cutouts -->
+    <path d="M 256 170 L 290 220 L 340 205 L 315 240 L 335 255 L 295 264 Z" fill="#060e22" />
+    <path d="M 256 170 L 222 220 L 172 205 L 197 240 L 177 255 L 217 264 Z" fill="#060e22" />
+
+    <!-- Highly polished central Chrome/Silver Letter V -->
+    <!-- Realistic 3D bevel silver V -->
+    <!-- Left leg of V -->
+    <path d="M 206 230 L 256 348 L 256 295 L 234 230 Z" fill="url(#silverGrad)" />
+    <!-- Right leg of V -->
+    <path d="M 306 230 L 256 348 L 256 295 L 278 230 Z" fill="url(#silverGrad)" opacity="0.85" />
+    <!-- High gloss overlay -->
+    <path d="M 256 348 L 230 230 L 244 230 L 256 270 L 268 230 L 282 230 Z" fill="url(#silverGrad)" />
+  </g>
+
+  <!-- Outer ambient micro-stars -->
+  <g fill="url(#goldGrad)" opacity="0.2">
+    <circle cx="100" cy="110" r="2" />
+    <circle cx="412" cy="110" r="2" />
+    <circle cx="64" cy="256" r="3" />
+    <circle cx="448" cy="256" r="3" />
+    <circle cx="120" cy="400" r="2" />
+    <circle cx="392" cy="400" r="2" />
+  </g>
+</svg>

@@ -1,9 +1,9 @@
 import React from 'react';
 import { useAppState } from '../context/AppContext';
-import { Trash2, Plus, Minus, ArrowRight, ShoppingCart, HelpCircle } from 'lucide-react';
+import { Trash2, Plus, Minus, ArrowRight, ShoppingCart, HelpCircle, PackageCheck, ChevronRight } from 'lucide-react';
 
 export const CartScreen: React.FC = () => {
-  const { cart, updateCartQuantity, removeFromCart, navigateTo } = useAppState();
+  const { cart, updateCartQuantity, removeFromCart, navigateTo, orders } = useAppState();
 
   const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
   
@@ -188,6 +188,85 @@ export const CartScreen: React.FC = () => {
                 <ArrowRight className="h-4.5 w-4.5 text-amber-400" />
               </div>
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* 4. Historic Past Orders Section */}
+      {orders && orders.length > 0 && (
+        <div className="mt-8 px-4 border-t border-slate-100 pt-6">
+          <div className="flex items-center justify-between mb-3.5">
+            <div className="flex items-center gap-2">
+              <div className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+              <h3 className="text-xs font-black uppercase tracking-wider text-slate-500">Order History ({orders.length})</h3>
+            </div>
+            <span className="text-[10px] font-bold text-slate-400 font-sans">Scroll to view all</span>
+          </div>
+
+          <div className="space-y-3 pb-8">
+            {orders.map(order => {
+              const getStatusColor = (status: string) => {
+                switch (status) {
+                  case 'Delivered': return 'bg-emerald-50 text-emerald-700 border-emerald-100';
+                  case 'Shipped': return 'bg-indigo-50 text-indigo-700 border-indigo-100';
+                  case 'Out for Delivery': return 'bg-amber-50 text-amber-700 border-amber-100';
+                  case 'Cancelled': return 'bg-rose-50 text-rose-700 border-rose-100';
+                  default: return 'bg-slate-50 text-slate-600 border-slate-150';
+                }
+              };
+
+              return (
+                <div
+                  key={order.id}
+                  className="rounded-2xl border border-slate-150 bg-white p-3.5 shadow-xs hover:border-slate-300 transition duration-350"
+                >
+                  {/* Item top ref row */}
+                  <div className="flex items-center justify-between border-b border-slate-50 pb-2 mb-2">
+                    <div>
+                      <span className="text-[8px] uppercase font-black text-slate-400 tracking-wider">REF ID: {order.id.slice(0, 10).toUpperCase()}</span>
+                      <p className="text-[10px] font-bold text-slate-500">{order.date}</p>
+                    </div>
+                    <span className={`rounded-lg border px-2 py-0.5 text-[8.5px] font-black uppercase tracking-wide bg-white ${getStatusColor(order.status)}`}>
+                      {order.status}
+                    </span>
+                  </div>
+
+                  {/* Items listed */}
+                  <div className="space-y-2">
+                    {order.items.map((it, idx) => (
+                      <div key={idx} className="flex gap-2 items-center">
+                        <img
+                          src={it.product.image}
+                          alt={it.product.name}
+                          className="h-8 w-7 rounded-sm object-cover bg-slate-50 border border-slate-100"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="truncate text-[11px] font-bold text-slate-800">{it.product.name}</p>
+                          <span className="text-[9px] text-slate-400 font-bold block">
+                            Qty: {it.quantity} {it.selectedSize ? `| Size: ${it.selectedSize}` : ''}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Action elements */}
+                  <div className="flex justify-between items-center border-t border-slate-50 pt-2.5 mt-2.5">
+                    <span className="text-xs font-black text-slate-900">Paid Amount: <strong className="font-mono text-slate-950">${order.total}</strong></span>
+                    
+                    <button
+                      id={`cart-track-order-history-btn-${order.id}`}
+                      onClick={() => navigateTo('trackOrder', { orderId: order.id })}
+                      className="flex items-center gap-1 px-3 py-1.5 text-[9.5px] font-black text-slate-800 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100 transition active:scale-95 cursor-pointer"
+                    >
+                      <PackageCheck className="h-3 w-3 text-slate-500" />
+                      <span>Track Shipment</span>
+                      <ChevronRight className="h-2.5 w-2.5 text-slate-400" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../context/AppContext';
-import { Share2, Star, Shield, ArrowRight, Eye, Sparkles, MessageSquare, ShoppingBag, ShoppingCart } from 'lucide-react';
+import { Share2, Star, Shield, ArrowRight, Eye, Sparkles, MessageSquare, ShoppingBag, ShoppingCart, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
 
 export const ProductDetailsScreen: React.FC = () => {
@@ -34,7 +34,33 @@ export const ProductDetailsScreen: React.FC = () => {
   const [selectedSize, setSelectedSize] = useState<string>(product.sizes?.[0] || '');
   const [selectedColor, setSelectedColor] = useState<string>(product.colors?.[0]?.name || '');
 
+  // Sync selected image if product changes
+  useEffect(() => {
+    if (product) {
+      setSelectedImage(product.image);
+    }
+  }, [product, productId]);
+
   const isLiked = wishlist.includes(product.id);
+
+  // Compute unique slideshow image URLs
+  const slideshowImages = Array.isArray(product.images) && product.images.length > 0
+    ? Array.from(new Set([product.image, ...product.images.filter(x => x && x.trim() !== '')]))
+    : [product.image];
+
+  const currentImageIdx = slideshowImages.includes(selectedImage)
+    ? slideshowImages.indexOf(selectedImage)
+    : 0;
+
+  const handlePrevImage = () => {
+    const prevIdx = (currentImageIdx - 1 + slideshowImages.length) % slideshowImages.length;
+    setSelectedImage(slideshowImages[prevIdx]);
+  };
+
+  const handleNextImage = () => {
+    const nextIdx = (currentImageIdx + 1) % slideshowImages.length;
+    setSelectedImage(slideshowImages[nextIdx]);
+  };
 
   // Filter out same category as related items
   const relatedProducts = products.filter(p => p.category === product.category && p.id !== product.id);
@@ -59,8 +85,37 @@ export const ProductDetailsScreen: React.FC = () => {
           referrerPolicy="no-referrer"
         />
 
+        {/* Floating Back Button */}
+        <button
+          id="product-back-btn"
+          onClick={() => navigateTo('home')}
+          className="absolute top-4 left-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-slate-850 shadow-md backdrop-blur-md transition hover:bg-white active:scale-95 cursor-pointer"
+        >
+          <ArrowLeft className="h-4.5 w-4.5" />
+        </button>
+
+        {/* Carousel Prev Slide Arrow */}
+        {slideshowImages.length > 1 && (
+          <button
+            onClick={handlePrevImage}
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/85 text-slate-800 shadow-md backdrop-blur-xs transition active:scale-90 hover:bg-white cursor-pointer"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+        )}
+
+        {/* Carousel Next Slide Arrow */}
+        {slideshowImages.length > 1 && (
+          <button
+            onClick={handleNextImage}
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/85 text-slate-800 shadow-md backdrop-blur-xs transition active:scale-90 hover:bg-white cursor-pointer"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        )}
+
         {/* Small floating action overlay badges */}
-        <div className="absolute bottom-4 left-4 flex gap-1.5">
+        <div className="absolute bottom-4 left-4 flex gap-1.5 z-10">
           {product.discount > 0 && (
             <span className="rounded-xl bg-amber-400 px-3 py-1 font-sans text-[10px] font-black uppercase tracking-wider text-slate-950 shadow-md">
               SAVE {product.discount}% OFF
@@ -73,6 +128,20 @@ export const ProductDetailsScreen: React.FC = () => {
           )}
         </div>
 
+        {/* Dots Indicator Overlay */}
+        {slideshowImages.length > 1 && (
+          <div className="absolute bottom-4 right-4 flex gap-1 bg-black/40 px-2.5 py-1.5 rounded-full backdrop-blur-xs z-10">
+            {slideshowImages.map((_, dotIdx) => (
+              <span
+                key={dotIdx}
+                className={`h-1.5 rounded-full transition-all ${
+                  dotIdx === currentImageIdx ? 'w-3.5 bg-amber-400' : 'w-1.5 bg-white/60'
+                }`}
+              />
+            ))}
+          </div>
+        )}
+
         {/* Quick share button mock */}
         <button
           id="share-product-btn"
@@ -83,21 +152,21 @@ export const ProductDetailsScreen: React.FC = () => {
               alert('Copied product share description details to clipboard!');
             }
           }}
-          className="absolute top-4 right-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-slate-600 shadow-md backdrop-blur-md transition hover:bg-white active:scale-90"
+          className="absolute top-4 right-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-slate-650 shadow-md backdrop-blur-md transition hover:bg-white active:scale-95 cursor-pointer"
         >
           <Share2 className="h-4.5 w-4.5" />
         </button>
       </div>
 
       {/* 2. Horizontal Image Carousel Thumbs */}
-      {product.images && product.images.length > 1 && (
+      {slideshowImages.length > 1 && (
         <div className="mt-3 flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-none">
-          {product.images.map((img, index) => (
+          {slideshowImages.map((img, index) => (
             <button
               key={index}
               onClick={() => setSelectedImage(img)}
               className={`h-16 w-14 shrink-0 overflow-hidden rounded-xl border-2 transition ${
-                selectedImage === img ? 'border-slate-950 bg-slate-100' : 'border-slate-200 bg-white'
+                selectedImage === img ? 'border-amber-400 bg-slate-100 shadow-xs' : 'border-slate-200 bg-white'
               }`}
             >
               <img src={img} alt="Thumb" className="h-full w-full object-cover" />
@@ -299,7 +368,7 @@ export const ProductDetailsScreen: React.FC = () => {
       )}
 
       {/* 8. Sticky CTA Panel Actions at footer */}
-      <div className="fixed bottom-16 left-0 right-0 z-30 mx-auto max-w-sm border-t border-slate-100 bg-white/95 pb-3 pt-2.5 px-4 shadow-[0_-8px_24px_rgba(0,0,0,0.04)] backdrop-blur-md">
+      <div className="fixed bottom-0 left-0 right-0 z-30 mx-auto max-w-sm border-t border-slate-100 bg-white/95 pb-5 pt-3.5 px-4 shadow-[0_-8px_24px_rgba(0,0,0,0.06)] backdrop-blur-md">
         <div className="flex gap-2.5">
           {/* Add to cart */}
           <button

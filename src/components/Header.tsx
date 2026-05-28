@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useAppState } from '../context/AppContext';
-import { Bell, Search, ArrowLeft, X, CheckSquare } from 'lucide-react';
+import { Bell, Search, ArrowLeft, X, CheckSquare, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export const Header: React.FC = () => {
-  const { navigation, goBack, navigateTo, notifications, markNotificationsAsRead } = useAppState();
+  const { navigation, goBack, navigateTo, notifications, markNotificationsAsRead, wishlist, logo } = useAppState();
   const [showNotifications, setShowNotifications] = useState(false);
 
   const isPrimaryScreen = ['home', 'categories', 'wishlist', 'cart', 'profile', 'adminDashboard'].includes(
@@ -30,11 +30,11 @@ export const Header: React.FC = () => {
       case 'settings':
         return 'App Settings';
       case 'login':
-        return 'Welcome to VELRIVA';
+        return 'Welcome to VELORA';
       case 'adminLogin':
         return 'Staff Portal';
       default:
-        return 'VELRIVA';
+        return 'VELORA';
     }
   };
 
@@ -56,9 +56,18 @@ export const Header: React.FC = () => {
               <ArrowLeft className="h-4.5 w-4.5 text-slate-800" />
             </button>
           ) : (
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-950 font-bold text-amber-400 text-xs shadow-md">
-              VR
-            </div>
+            <button
+              id="logo-profile-btn"
+              onClick={() => navigateTo('profile')}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-950 font-bold text-amber-400 text-xs shadow-md transition hover:scale-105 active:scale-95 cursor-pointer overflow-hidden p-0"
+              title="UserProfile Hub"
+            >
+              {logo ? (
+                <img src={logo} className="h-full w-full object-cover" referrerPolicy="no-referrer" alt="Velora Logo" />
+              ) : (
+                <span>VL</span>
+              )}
+            </button>
           )}
 
           <h1 className="text-[17px] font-bold tracking-tight text-slate-900">
@@ -71,9 +80,22 @@ export const Header: React.FC = () => {
             <button
               id="search-icon-btn"
               onClick={() => navigateTo('search')}
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-100 bg-white shadow-sm transition active:scale-95"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-100 bg-white shadow-sm transition active:scale-95 cursor-pointer"
             >
               <Search className="h-4 w-4 text-slate-600" />
+            </button>
+
+            <button
+              id="header-wishlist-btn"
+              onClick={() => navigateTo('wishlist')}
+              className="relative flex h-9 w-9 items-center justify-center rounded-full border border-slate-100 bg-white shadow-sm transition active:scale-95 cursor-pointer"
+            >
+              <Heart className={`h-4 w-4 ${wishlist.length > 0 ? 'fill-rose-500 text-rose-500' : 'text-slate-600'}`} />
+              {wishlist.length > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-rose-500 font-sans text-[8px] font-bold text-white ring-2 ring-white">
+                  {wishlist.length}
+                </span>
+              )}
             </button>
 
             <button
@@ -82,7 +104,7 @@ export const Header: React.FC = () => {
                 setShowNotifications(true);
                 markNotificationsAsRead();
               }}
-              className="relative flex h-9 w-9 items-center justify-center rounded-full border border-slate-100 bg-white shadow-sm transition active:scale-95"
+              className="relative flex h-9 w-9 items-center justify-center rounded-full border border-slate-100 bg-white shadow-sm transition active:scale-95 cursor-pointer"
             >
               <Bell className="h-4 w-4 text-slate-600" />
               {unreadCount > 0 && (

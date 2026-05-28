@@ -47,7 +47,7 @@ export const ProductListingScreen: React.FC = () => {
         />
         <div className="absolute inset-0 bg-slate-950/20" />
         <div className="absolute inset-0 flex flex-col justify-end p-4">
-          <span className="text-[9px] font-black uppercase tracking-wider text-amber-400">VELRIVA ARCHIVES</span>
+          <span className="text-[9px] font-black uppercase tracking-wider text-amber-400">VELORA ARCHIVES</span>
           <h2 className="text-base font-black tracking-tight text-white capitalize">
             {activeCategory?.name || 'All Collections'}
           </h2>

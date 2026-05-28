@@ -9,7 +9,7 @@ export const SettingsScreen: React.FC = () => {
   const [notifyState, setNotifyState] = useState(true);
 
   const handleResetStorage = () => {
-    if (confirm('Verify: Would you like to clear the VELRIVA local storage cache state? This resets catalog files, cart quantity, orders and session credentials.')) {
+    if (confirm('Verify: Would you like to clear the VELORA local storage cache state? This resets catalog files, cart quantity, orders and session credentials.')) {
       localStorage.clear();
       showToast('Cache files cleared! Restarting...', 'info');
       setTimeout(() => {
@@ -22,7 +22,7 @@ export const SettingsScreen: React.FC = () => {
     <div id="settings-screen-container" className="pb-24 pt-2">
       <div className="px-4 mt-2">
         <h2 className="text-xl font-extrabold tracking-tight">System Settings</h2>
-        <p className="text-xs text-slate-400 font-medium">Fine-tune your custom VELRIVA dropship reseller experience.</p>
+        <p className="text-xs text-slate-400 font-medium">Fine-tune your custom VELORA dropship reseller experience.</p>
       </div>
 
       <div className="mt-5 px-4 space-y-4">
@@ -129,7 +129,7 @@ export const SettingsScreen: React.FC = () => {
 
         {/* Corporate Legal Footer specifications */}
         <div className="text-center pt-4 text-[10.5px] font-bold text-slate-400 tracking-wider space-y-1">
-          <p>VELRIVA PWA SHOP APP</p>
+          <p>VELORA PWA SHOP APP</p>
           <p className="font-mono font-medium">VERSION 3.1.0-DEV (UTC 2026)</p>
           <div className="flex items-center justify-center gap-1 font-sans text-[10px] text-emerald-500 font-black uppercase mt-2">
             <ShieldCheck className="h-4 w-4" />

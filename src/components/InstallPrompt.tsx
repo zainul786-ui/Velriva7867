@@ -6,27 +6,21 @@ export const InstallPrompt: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // Show prompt after 5 seconds
+    // Show prompt promptly after 2.5 seconds on every page load/refresh
     const timer = setTimeout(() => {
-      const dismissedState = localStorage.getItem('velriva_pwa_dismissed');
-      if (!dismissedState) {
-        setIsVisible(true);
-      }
-    }, 5000);
+      setIsVisible(true);
+    }, 2500);
 
     return () => clearTimeout(timer);
   }, []);
 
   const handleInstall = () => {
     setIsVisible(false);
-    // Mimic standard native interaction
-    alert('Thank you! On mobile: tap "Add to Home Screen" in your browser menu to install VELRIVA with full offline support.');
-    localStorage.setItem('velriva_pwa_dismissed', 'true');
+    alert('Thank you! To install VELORA: Tap the browser share/menu button and select "Add to Home Screen" to launch with full fast-cache offline mode.');
   };
 
   const handleDismiss = () => {
     setIsVisible(false);
-    localStorage.setItem('velriva_pwa_dismissed', 'true');
   };
 
   return (
@@ -45,7 +39,7 @@ export const InstallPrompt: React.FC = () => {
                 VR
               </div>
               <div>
-                <h4 className="text-xs font-black tracking-wide text-amber-400">VELRIVA INSTANT</h4>
+                <h4 className="text-xs font-black tracking-wide text-amber-400">VELORA INSTANT</h4>
                 <p className="text-[11px] font-medium text-slate-300 leading-relaxed max-w-[190px]">
                   Install our lightweight app to get instant delivery monitoring & offline orders.
                 </p>

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useAppState } from '../context/AppContext';
-import { KeyRound, ShieldAlert, ArrowRight } from 'lucide-react';
+import { KeyRound, ShieldAlert, ArrowRight, ArrowLeft } from 'lucide-react';
 
 export const AdminLoginScreen: React.FC = () => {
-  const { loginAdmin, navigateTo, showToast } = useAppState();
+  const { loginAdmin, navigateTo, showToast, logo } = useAppState();
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -12,7 +12,8 @@ export const AdminLoginScreen: React.FC = () => {
   const handleAdminVerifySubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (username.trim().toLowerCase() === 'velriva7867@gmail.com' && password === 'velriva7867') {
+    const normalizedUser = username.trim().toLowerCase();
+    if ((normalizedUser === 'velriva7867@gmail.com' || normalizedUser === 'velora068@gmail.com') && (password === 'velriva@786' || password === 'velriva7867' || password === 'velora@786')) {
       const success = loginAdmin();
       if (success) {
         navigateTo('adminDashboard');
@@ -25,18 +26,32 @@ export const AdminLoginScreen: React.FC = () => {
 
   // Quick helper to fill in simulation keys instantly for the user review!
   const handleAutofillSimulatorCredentials = () => {
-    setUsername('Velriva7867@gmail.com');
-    setPassword('velriva7867');
+    setUsername('velora068@gmail.com');
+    setPassword('velora@786');
     setErrorMsg('');
   };
 
   return (
-    <div id="admin-login-screen" className="pb-24 pt-6 px-4 flex flex-col justify-between min-h-[500px]">
-      <div className="space-y-6">
+    <div id="admin-login-screen" className="pb-24 pt-6 px-4 flex flex-col justify-between min-h-[500px] relative">
+      {/* Back to home customer login screen */}
+      <button
+        id="admin-login-back-btn"
+        onClick={() => navigateTo('login')}
+        className="absolute top-4 left-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition active:scale-95 hover:bg-slate-50 cursor-pointer"
+        title="Return to Customer Portal"
+      >
+        <ArrowLeft className="h-4.5 w-4.5" />
+      </button>
+
+      <div className="space-y-6 mt-10">
         {/* Screen Header Banner */}
-        <div className="text-center mt-3">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-slate-950 font-black text-amber-400 text-lg shadow-md">
-            VR
+        <div className="text-center mt-3 border-b border-slate-100 pb-2">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-slate-950 font-black text-amber-400 text-lg shadow-md overflow-hidden p-0">
+            {logo ? (
+              <img src={logo} className="h-full w-full object-cover" referrerPolicy="no-referrer" alt="Velora Logo" />
+            ) : (
+              <span>VL</span>
+            )}
           </div>
           <h2 className="text-xl font-black text-slate-900 mt-4 tracking-tight">Staff Entrance Portal</h2>
           <p className="text-xs text-slate-400 max-w-[215px] mx-auto mt-1">
@@ -54,8 +69,8 @@ export const AdminLoginScreen: React.FC = () => {
             To view the full inventory CRUD, orders and graphs, use these credentials or tap the autofill simulator helper button below.
           </p>
           <div className="flex flex-col gap-1.5 bg-white border border-amber-100 rounded-xl px-3 py-2 text-[10.5px] font-mono leading-none font-bold text-slate-700">
-            <div>Email: <strong className="text-slate-950">Velriva7867@gmail.com</strong></div>
-            <div>Password: <strong className="text-slate-950">velriva7867</strong></div>
+            <div>Email: <strong className="text-slate-950">velora068@gmail.com</strong></div>
+            <div>Password: <strong className="text-slate-950">velora@786</strong></div>
           </div>
 
           <button
@@ -116,7 +131,7 @@ export const AdminLoginScreen: React.FC = () => {
 
       {/* Corporate Compliance Note */}
       <div className="text-center text-[9.5px] font-bold text-slate-400 uppercase tracking-widest mt-6">
-        VELRIVA GLOBAL LTD. SECURE INGRESS SYSTEMS
+        VELORA GLOBAL LTD. SECURE INGRESS SYSTEMS
       </div>
     </div>
   );

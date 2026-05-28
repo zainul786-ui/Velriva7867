@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAppState } from '../context/AppContext';
 import { Product, Order, PromoBanner, Coupon } from '../types';
 import { CATEGORIES } from '../data/mockData';
-import { BarChart3, Package, Truck, LayoutGrid, Plus, Edit3, Trash2, X, Search, Check, Save, Smartphone, Laptop, Tablet, TrendingUp, Sparkles, UserCheck, Megaphone, Percent, Tag } from 'lucide-react';
+import { BarChart3, Package, Truck, LayoutGrid, Plus, Edit3, Trash2, X, Search, Check, Save, Smartphone, Laptop, Tablet, TrendingUp, Sparkles, UserCheck, Megaphone, Percent, Tag, FileImage, Upload } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
   const { 
@@ -18,7 +18,11 @@ export const AdminDashboard: React.FC = () => {
     coupons,
     addCoupon,
     deleteCoupon,
-    accounts
+    accounts,
+    navigateTo,
+    logo,
+    updateLogo,
+    showToast
   } = useAppState();
 
   // Internal tab choice
@@ -47,6 +51,7 @@ export const AdminDashboard: React.FC = () => {
   const [formOldPrice, setFormOldPrice] = useState('');
   const [formCategory, setFormCategory] = useState('headphones');
   const [formImage, setFormImage] = useState('');
+  const [formImages, setFormImages] = useState<string[]>([]);
   const [formStock, setFormStock] = useState('10');
   const [formDesc, setFormDesc] = useState('');
   const [formSizes, setFormSizes] = useState<string[]>(['S', 'M', 'L']);
@@ -63,6 +68,7 @@ export const AdminDashboard: React.FC = () => {
     setFormOldPrice('100');
     setFormCategory('headphones');
     setFormImage('https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop');
+    setFormImages([]);
     setFormStock('20');
     setFormDesc('Velriva dropship collection spec file.');
     setFormSizes(['S', 'M', 'L']);
@@ -77,6 +83,7 @@ export const AdminDashboard: React.FC = () => {
     setFormOldPrice(String(prod.oldPrice));
     setFormCategory(prod.category);
     setFormImage(prod.image);
+    setFormImages(Array.isArray(prod.images) ? prod.images.filter(x => x !== prod.image) : []);
     setFormStock(String(prod.stock));
     setFormDesc(prod.description);
     setFormSizes(prod.sizes || []);
@@ -100,7 +107,7 @@ export const AdminDashboard: React.FC = () => {
       discount: Math.round(((Number(formOldPrice) - Number(formPrice)) / (Number(formOldPrice) || 1)) * 100) || 0,
       rating: editingItem ? editingItem.rating : 5,
       image: formImage,
-      images: editingItem ? editingItem.images : [formImage],
+      images: Array.from(new Set([formImage, ...formImages.filter(img => img.trim() !== '')])),
       category: formCategory,
       description: formDesc,
       stock: Number(formStock) || 0,
@@ -152,13 +159,23 @@ export const AdminDashboard: React.FC = () => {
           <p className="text-xs text-slate-400 font-medium">Control live catalog files & shipping logistics.</p>
         </div>
 
-        <button
-          id="admin-logout-trigger"
-          onClick={logoutAdmin}
-          className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[10px] font-black text-rose-500 hover:bg-rose-100 active:scale-95 transition"
-        >
-          Staff Logout
-        </button>
+        <div className="flex gap-2">
+          <button
+            id="admin-shopview-trigger"
+            onClick={() => navigateTo('home')}
+            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-black text-slate-700 hover:bg-slate-50 active:scale-95 transition flex items-center gap-1 shrink-0"
+          >
+            <span>← Go to Shop</span>
+          </button>
+          
+          <button
+            id="admin-logout-trigger"
+            onClick={logoutAdmin}
+            className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[10px] font-black text-rose-500 hover:bg-rose-100 active:scale-95 transition shrink-0"
+          >
+            Staff Logout
+          </button>
+        </div>
       </div>
 
       {/* 2. Horizontal Panel Navigation Tabs */}
@@ -568,6 +585,120 @@ export const AdminDashboard: React.FC = () => {
       {activeTab === 'marketing' && (
         <div className="px-4 mt-5 space-y-6">
           
+          {/* Section 0: Website Official Branding LOGO Management */}
+          <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm space-y-4 animate-fadeIn">
+            <div className="flex items-center gap-2 border-b border-slate-50 pb-3">
+              <FileImage className="h-4.5 w-4.5 text-indigo-500" />
+              <div>
+                <h3 className="text-xs font-black uppercase text-slate-900">Website Custom Logo Upload</h3>
+                <p className="text-[10px] text-slate-400 font-medium">Set official branding logo for splash, login screens and headers</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-5 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+              {/* Current Logo Preview */}
+              <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                <span className="text-[8px] font-black uppercase tracking-widest text-[#94a3b8] mb-0.5">Current Logo</span>
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-950 font-black text-amber-100 text-xl shadow-md overflow-hidden p-0 border border-slate-200">
+                  {logo ? (
+                    <img src={logo} className="h-full w-full object-cover" referrerPolicy="no-referrer" alt="Velora logo" />
+                  ) : (
+                    <span className="text-amber-400">VL</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Upload Controls */}
+              <div className="flex-1 space-y-2 w-full text-center sm:text-left">
+                <p className="text-[10.5px] text-slate-500 font-medium leading-relaxed">
+                  Upload an image (PNG, JPG, or SVG) to replace the default <strong className="text-slate-800">VL</strong> monogram logo on all active user screens instantly.
+                </p>
+
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
+                  <label className="relative flex items-center gap-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-[10px] font-black uppercase tracking-wider transition cursor-pointer active:scale-95 shadow-xs">
+                    <Upload className="h-3.5 w-3.5" />
+                    <span>Choose Image</span>
+                    <input
+                      type="file"
+                      id="admin-logo-upload-input"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          showToast('Reading brand image file...', 'info');
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            const result = event.target?.result;
+                            if (typeof result === 'string') {
+                              showToast('Optimizing and scaling logo down...', 'info');
+                              const img = new Image();
+                              img.onload = () => {
+                                try {
+                                  // Draw image to canvas to scale down
+                                  const canvas = document.createElement('canvas');
+                                  const maxDim = 160;
+                                  let width = img.width;
+                                  let height = img.height;
+                                  
+                                  if (width > height) {
+                                    if (width > maxDim) {
+                                      height *= maxDim / width;
+                                      width = maxDim;
+                                    }
+                                  } else {
+                                    if (height > maxDim) {
+                                      width *= maxDim / height;
+                                      height = maxDim;
+                                    }
+                                  }
+                                  
+                                  canvas.width = width;
+                                  canvas.height = height;
+                                  const ctx = canvas.getContext('2d');
+                                  if (ctx) {
+                                    ctx.drawImage(img, 0, 0, width, height);
+                                    const base64Png = canvas.toDataURL('image/png');
+                                    updateLogo(base64Png);
+                                  } else {
+                                    updateLogo(result);
+                                  }
+                                } catch (err) {
+                                  console.error("Canvas compression failed, using direct base64:", err);
+                                  updateLogo(result);
+                                }
+                              };
+                              img.onerror = () => {
+                                updateLogo(result);
+                              };
+                              img.src = result;
+                            }
+                          };
+                          reader.onerror = () => {
+                            showToast('Failed to read image file', 'error');
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </label>
+
+                  {logo && (
+                    <button
+                      type="button"
+                      id="reset-brand-logo-btn"
+                      onClick={() => updateLogo('')}
+                      className="flex items-center gap-1 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-2 text-[10px] font-black uppercase tracking-wider transition active:scale-95 cursor-pointer"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                      <span>Reset Default</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+          
           {/* Section 1: Promo Banners Management */}
           <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm space-y-4">
             <div className="flex items-center gap-2 border-b border-slate-50 pb-3">
@@ -714,7 +845,7 @@ export const AdminDashboard: React.FC = () => {
                   <label className="text-[9px] font-black uppercase text-slate-400 mb-0.5 block">Voucher Code</label>
                   <input
                     type="text"
-                    placeholder="E.g. VELRIVA786"
+                    placeholder="E.g. VELORA786"
                     value={newCouponCode}
                     onChange={(e) => setNewCouponCode(e.target.value.toUpperCase())}
                     className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-800"
@@ -862,15 +993,51 @@ export const AdminDashboard: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 mb-1 block">Image Address (Unsplash URL)</label>
+                <label className="text-[10px] font-black uppercase text-slate-400 mb-1 block">Primary Image Address (Unsplash URL)</label>
                 <input
                   id="form-item-image"
                   type="text"
                   value={formImage}
                   onChange={(e) => setFormImage(e.target.value)}
                   placeholder="e.g. https://images.unsplash.com/..."
-                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs font-bold text-slate-800 placeholder-slate-400 focus:outline-hidden"
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs font-bold text-slate-800 placeholder-slate-400 focus:outline-hidden mb-2"
                 />
+              </div>
+
+              {/* Dynamic list for multiple product slide images */}
+              <div className="bg-slate-50 rounded-2xl border border-slate-100 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase text-slate-500 block">Additional Slide Images ({formImages.length})</span>
+                  <button
+                    type="button"
+                    onClick={() => setFormImages([...formImages, ''])}
+                    className="text-[10px] font-black text-indigo-600 hover:text-indigo-850 px-2 py-1 rounded bg-indigo-50 border border-indigo-100 transition active:scale-95 cursor-pointer"
+                  >
+                    + Add New Slide
+                  </button>
+                </div>
+                {formImages.map((img, idx) => (
+                  <div key={idx} className="flex gap-2 items-center">
+                    <input
+                      type="text"
+                      value={img}
+                      onChange={(e) => {
+                        const copy = [...formImages];
+                        copy[idx] = e.target.value;
+                        setFormImages(copy);
+                      }}
+                      placeholder={`Slide Image #${idx + 1} URL`}
+                      className="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-800 placeholder-slate-400 focus:outline-hidden bg-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setFormImages(formImages.filter((_, i) => i !== idx))}
+                      className="text-xs text-rose-500 font-extrabold px-2.5 py-2 hover:bg-rose-50 border border-rose-100 bg-white rounded-xl active:scale-95 transition"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
               </div>
 
               <div className="grid grid-cols-2 gap-3.5">

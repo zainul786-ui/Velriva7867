@@ -3,7 +3,7 @@ import { useAppState } from '../context/AppContext';
 import { motion } from 'motion/react';
 
 export const SplashScreen: React.FC = () => {
-  const { navigateTo, currentUser } = useAppState();
+  const { navigateTo, currentUser, logo } = useAppState();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -31,9 +31,13 @@ export const SplashScreen: React.FC = () => {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, ease: 'easeOut' }}
-          className="flex h-20 w-20 items-center justify-center rounded-[28px] bg-amber-400 font-black text-slate-950 text-3xl shadow-2xl"
+          className="flex h-20 w-20 items-center justify-center rounded-[28px] bg-amber-400 font-black text-slate-950 text-3xl shadow-2xl overflow-hidden"
         >
-          VR
+          {logo ? (
+            <img src={logo} className="h-full w-full object-cover" referrerPolicy="no-referrer" alt="Velora Logo" />
+          ) : (
+            <span>VL</span>
+          )}
         </motion.div>
         
         <motion.h1
@@ -42,7 +46,7 @@ export const SplashScreen: React.FC = () => {
           transition={{ delay: 0.3, duration: 0.8 }}
           className="mt-6 font-sans text-4xl font-black tracking-widest text-[#FFF]"
         >
-          VELRIVA
+          VELORA
         </motion.h1>
 
         <motion.p

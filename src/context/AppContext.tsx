@@ -53,6 +53,7 @@ interface AppContextType {
   loginUser: (email: string, password: string) => Promise<boolean | string>;
   registerUser: (name: string, email: string, password: string, phone: string) => Promise<boolean | string>;
   logoutUser: () => void;
+  updateUserProfile: (name: string, phone: string) => Promise<boolean>;
   isAdmin: boolean;
   loginAdmin: () => boolean;
   logoutAdmin: () => void;
@@ -66,6 +67,10 @@ interface AppContextType {
   // Toast notifications
   toast: { message: string; type: 'success' | 'info' | 'error' } | null;
   showToast: (message: string, type?: 'success' | 'info' | 'error') => void;
+
+  // Website custom logo (base64 or URL)
+  logo: string;
+  updateLogo: (base64OrUrl: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -141,6 +146,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Accounts state (local cache of registration DB)
   const [accounts, setAccounts] = useState<any[]>([]);
 
+  // 10. Website dynamic custom logo state viewable across app with gold SVG fallback
+  const [logo, setLogo] = useState<string>(() => {
+    return localStorage.getItem('velora_logo') || '';
+  });
+
+  const updateLogo = (base64OrUrl: string) => {
+    setLogo(base64OrUrl);
+    localStorage.setItem('velora_logo', base64OrUrl);
+    showToast('Brand Logan updated successfully!', 'success');
+  };
+
   // Load initial data from localStorage on Mount
   useEffect(() => {
     // Products
@@ -199,7 +215,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const defaultNotifs: AppNotification[] = [
         {
           id: 'notif_1',
-          title: 'Welcome to VELRIVA!',
+          title: 'Welcome to VELORA!',
           body: 'Get premium products delivered to your doorstep. COD is available nationwide.',
           time: 'Just now',
           read: false,
@@ -229,21 +245,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // Accounts Store Initialization
     const storedAccounts = localStorage.getItem('velriva_accounts');
+    const defaultAccounts = [
+      {
+        id: 'usr_default',
+        name: 'Zain Ul Amaan',
+        email: 'zainulamaan4@gmail.com',
+        phone: '+91 9690986010',
+        password: 'velriva@786',
+        cart: [],
+        wishlist: [],
+        orders: []
+      }
+    ];
     if (storedAccounts) {
-      setAccounts(JSON.parse(storedAccounts));
+      try {
+        const parsed = JSON.parse(storedAccounts);
+        const migrated = parsed.map((acc: any) => {
+          if (acc.email === 'zainulamaan4@gmail.com' && (acc.password === 'password123' || !acc.password)) {
+            return { ...acc, password: 'velriva@786' };
+          }
+          return acc;
+        });
+        localStorage.setItem('velriva_accounts', JSON.stringify(migrated));
+        setAccounts(migrated);
+      } catch (e) {
+        localStorage.setItem('velriva_accounts', JSON.stringify(defaultAccounts));
+        setAccounts(defaultAccounts);
+      }
     } else {
-      const defaultAccounts = [
-        {
-          id: 'usr_default',
-          name: 'Zain Ul Amaan',
-          email: 'zainulamaan4@gmail.com',
-          phone: '+91 9690986010',
-          password: 'password123',
-          cart: [],
-          wishlist: [],
-          orders: []
-        }
-      ];
       localStorage.setItem('velriva_accounts', JSON.stringify(defaultAccounts));
       setAccounts(defaultAccounts);
     }
@@ -722,7 +751,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       tracking: [
         {
           status: 'Order Implemented',
-          description: 'Your order was successfully submitted to VELRIVA.',
+          description: 'Your order was successfully submitted to VELORA.',
           time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
         },
       ],
@@ -823,7 +852,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     syncOrders(updated);
     addNotification(
       `Order Status: ${status}`,
-      `Your VELRIVA order ${orderId} is now: ${status}`
+      `Your VELORA order ${orderId} is now: ${status}`
     );
     showToast(`Order updated to: ${status}`);
   };
@@ -1056,6 +1085,74 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('Logged out of user account', 'info');
   };
 
+  const updateUserProfile = async (name: string, phone: string): Promise<boolean> => {
+    if (!currentUser.isLoggedIn || !currentUser.email) {
+      showToast('You must be logged in to update your profile.', 'error');
+      return false;
+    }
+
+    const trimmedName = name.trim();
+    const trimmedPhone = phone.trim();
+
+    if (!trimmedName) {
+      showToast('Name cannot be empty.', 'error');
+      return false;
+    }
+
+    // 1. If Supabase is configured, update backend
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { error: updateErr } = await supabase
+          .from('profiles')
+          .update({ name: trimmedName, phone: trimmedPhone })
+          .eq('email', currentUser.email.toLowerCase());
+
+        if (updateErr) {
+          showToast(`Supabase update failed: ${updateErr.message}`, 'error');
+          return false;
+        }
+      } catch (err: any) {
+        console.error('Supabase profile update failure', err);
+        showToast('Supabase profile update failure.', 'error');
+        return false;
+      }
+    }
+
+    // 2. Update local currentUser state
+    const updatedUser: User = {
+      ...currentUser,
+      name: trimmedName,
+      phone: trimmedPhone
+    };
+    setCurrentUser(updatedUser);
+    localStorage.setItem('velriva_user', JSON.stringify(updatedUser));
+
+    // 3. Update accounts cache
+    const storedAccounts = localStorage.getItem('velriva_accounts');
+    if (storedAccounts) {
+      try {
+        const parsed = JSON.parse(storedAccounts);
+        const updatedAccounts = parsed.map((acc: any) => {
+          if (acc.email.toLowerCase() === currentUser.email.toLowerCase()) {
+            return {
+              ...acc,
+              name: trimmedName,
+              phone: trimmedPhone
+            };
+          }
+          return acc;
+        });
+        localStorage.setItem('velriva_accounts', JSON.stringify(updatedAccounts));
+        setAccounts(updatedAccounts);
+      } catch (e) {
+        console.error('Failed to update accounts cache', e);
+      }
+    }
+
+    showToast('Profile updated successfully!', 'success');
+    return true;
+  };
+
   const loginAdmin = () => {
     setIsAdmin(true);
     localStorage.setItem('velriva_admin_logged_in', 'true');
@@ -1124,6 +1221,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         loginUser,
         registerUser,
         logoutUser,
+        updateUserProfile,
         isAdmin,
         loginAdmin,
         logoutAdmin,
@@ -1133,6 +1231,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addNotification,
         toast,
         showToast,
+        logo,
+        updateLogo,
       }}
     >
       {children}

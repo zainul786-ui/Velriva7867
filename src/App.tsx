@@ -47,6 +47,14 @@ const AppContent: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Smooth scroll main viewport to top on screen transition
+  useEffect(() => {
+    const el = document.getElementById('app-main-viewport');
+    if (el) {
+      el.scrollTop = 0;
+    }
+  }, [navigation.currentScreen]);
+
   // Screen Switch router
   const renderActiveScreen = () => {
     // Force authentication guard for all regular client workspaces
@@ -96,8 +104,10 @@ const AppContent: React.FC = () => {
   };
 
   const isSplash = navigation.currentScreen === 'splash';
+  const isAuthRequiredScreen = !['splash', 'login', 'adminLogin', 'adminDashboard'].includes(navigation.currentScreen);
+  const showingLoginGuard = !currentUser.isLoggedIn && isAuthRequiredScreen;
   const hideChrome = isSplash || 
-    (!currentUser.isLoggedIn && !isAdmin) ||
+    showingLoginGuard ||
     ['login', 'adminLogin', 'adminDashboard', 'success'].includes(navigation.currentScreen);
 
   return (
@@ -118,7 +128,7 @@ const AppContent: React.FC = () => {
       </main>
 
       {/* 3. Utilities, Bottom Bars, floating prompts */}
-      {!hideChrome && <BottomNavigation />}
+      {!hideChrome && navigation.currentScreen !== 'productDetails' && <BottomNavigation />}
       {!hideChrome && <WhatsAppButton />}
       {!hideChrome && <InstallPrompt />}
       <Toast />

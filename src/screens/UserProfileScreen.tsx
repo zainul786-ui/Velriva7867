@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAppState } from '../context/AppContext';
-import { User, ShoppingBag, ShieldCheck, Settings, LogOut, ChevronRight, HelpCircle, Truck, KeySquare } from 'lucide-react';
+import { User, ShoppingBag, ShieldCheck, Settings, LogOut, ChevronRight, HelpCircle, Truck, KeySquare, Edit2, Check, X, Instagram, Youtube, Mail } from 'lucide-react';
 
 export const UserProfileScreen: React.FC = () => {
-  const { currentUser, logoutUser, navigateTo, orders, isAdmin } = useAppState();
+  const { currentUser, logoutUser, navigateTo, orders, isAdmin, updateUserProfile } = useAppState();
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState(currentUser.name || '');
+  const [editPhone, setEditPhone] = useState(currentUser.phone || '');
+  const [saving, setSaving] = useState(false);
 
   const handleStatClick = (tab: 'orders' | 'track') => {
     if (!currentUser.isLoggedIn) {
@@ -41,8 +46,35 @@ export const UserProfileScreen: React.FC = () => {
       subtitle: 'Instant Chat Assistance 24/7',
       icon: HelpCircle,
       action: () => {
-        const text = encodeURIComponent('Hello VELRIVA support! I need assistance with my order/account.');
+        const text = encodeURIComponent('Hello VELORA support! I need assistance with my order/account.');
         window.open(`https://wa.me/919690986010?text=${text}`, '_blank');
+      },
+    },
+    {
+      id: 'profile-instagram',
+      title: 'Instagram Support & Store',
+      subtitle: '@velora_store.786',
+      icon: Instagram,
+      action: () => {
+        window.open('https://www.instagram.com/velora_store.786?igsh=MWJlbzVjOG96aWFzMg==', '_blank');
+      },
+    },
+    {
+      id: 'profile-youtube',
+      title: 'YouTube Support Desk & Channel',
+      subtitle: '@velriva resource channel',
+      icon: Youtube,
+      action: () => {
+        window.open('https://youtube.com/@velriva?si=je8rcw_kLp1s7BdE', '_blank');
+      },
+    },
+    {
+      id: 'profile-email',
+      title: 'Official Email Assistance',
+      subtitle: 'velora068@gmail.com',
+      icon: Mail,
+      action: () => {
+        window.open('mailto:velora068@gmail.com', '_blank');
       },
     }
   ];
@@ -72,22 +104,97 @@ export const UserProfileScreen: React.FC = () => {
         </div>
       ) : (
         /* 2. Authenticated Profile Space */
-        <div className="px-4 space-y-5">
+        <div className="px-4 space-y-5 animate-fadeIn">
           {/* Welcome User avatar strip */}
-          <div className="flex items-center gap-4 bg-white rounded-3xl border border-slate-100 p-4 shadow-xs">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-900 font-black text-amber-400 text-lg shadow-md">
-              {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
-            </div>
-            
-            <div className="overflow-hidden">
-              <span className="text-[10px] bg-slate-950 text-amber-400 px-1.5 py-0.5 rounded-md font-black tracking-wider uppercase block w-fit mb-1">
-                GOLD VIP MEMBERSHIP
-              </span>
-              <h3 className="font-extrabold text-slate-900 text-base leading-none truncate pr-1">
-                {currentUser.name}
-              </h3>
-              <p className="text-xs text-slate-400 mt-1 font-medium truncate pr-1">{currentUser.email}</p>
-            </div>
+          <div className="bg-white rounded-3xl border border-slate-100 p-4 shadow-xs">
+            {!isEditing ? (
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-900 font-black text-amber-400 text-lg shadow-md shrink-0">
+                    {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                  
+                  <div className="overflow-hidden">
+                    <span className="text-[10px] bg-slate-950 text-amber-400 px-1.5 py-0.5 rounded-md font-black tracking-wider uppercase block w-fit mb-1">
+                      GOLD VIP MEMBERSHIP
+                    </span>
+                    <h3 className="font-extrabold text-slate-900 text-base leading-none truncate pr-1">
+                      {currentUser.name}
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-1 font-medium truncate pr-1">{currentUser.email}</p>
+                    {currentUser.phone && (
+                      <p className="text-[10.5px] text-slate-500 mt-1 font-bold">📞 {currentUser.phone}</p>
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  id="profile-toggle-edit-btn"
+                  onClick={() => {
+                    setEditName(currentUser.name || '');
+                    setEditPhone(currentUser.phone || '');
+                    setIsEditing(true);
+                  }}
+                  className="flex h-8 px-2.5 items-center justify-center rounded-xl bg-slate-50 border border-slate-150 text-[10.5px] font-black text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition active:scale-95 cursor-pointer shrink-0"
+                  title="Edit Profile"
+                >
+                  Edit
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3.5 animate-fadeIn">
+                <div className="flex items-center justify-between border-b border-slate-50 pb-2">
+                  <span className="text-[10.5px] font-black uppercase text-indigo-600 tracking-wider">Update Profile Information</span>
+                  <div className="flex gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditing(false)}
+                      className="text-[10.5px] font-bold text-slate-400 bg-slate-50 border border-slate-150 px-2.5 py-1 rounded-lg hover:bg-slate-100 active:scale-95 transition cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={async () => {
+                        setSaving(true);
+                        const success = await updateUserProfile(editName, editPhone);
+                        if (success) {
+                          setIsEditing(false);
+                        }
+                        setSaving(false);
+                      }}
+                      className="text-[10.5px] font-black text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 px-3.5 py-1 rounded-lg active:scale-95 transition cursor-pointer shadow-sm"
+                    >
+                      {saving ? 'Saving...' : 'Save'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3">
+                  <div>
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Your Full Name</label>
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      placeholder="Name"
+                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs font-bold text-slate-800 focus:outline-hidden bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Mobile / WhatsApp Number</label>
+                    <input
+                      type="tel"
+                      value={editPhone}
+                      onChange={(e) => setEditPhone(e.target.value)}
+                      placeholder="Phone or WhatsApp No."
+                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs font-bold text-slate-800 focus:outline-hidden bg-white"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Dynamic statistics row */}
@@ -141,7 +248,7 @@ export const UserProfileScreen: React.FC = () => {
           </div>
 
           {/* Admin Area Bridge */}
-          {(currentUser?.email === 'velriva7867@gmail.com' || currentUser?.email === 'zainulamaan4@gmail.com' || isAdmin) && (
+          {(currentUser?.email === 'velriva7867@gmail.com' || currentUser?.email === 'velora068@gmail.com' || currentUser?.email === 'zainulamaan4@gmail.com' || isAdmin) && (
             <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-amber-100/50 border border-amber-200">
               <div className="flex items-center justify-between">
                 <div>
