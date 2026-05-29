@@ -55,10 +55,18 @@ export const AdminDashboard: React.FC = () => {
     setWaSupportPhone(supportPhone);
   }, [supportInstagram, supportYoutube, supportEmail, supportPhone]);
 
+  // Helper to determine the backend API base url for external static deployments like Netlify
+  const getApiUrl = (endpoint: string) => {
+    if (typeof window !== 'undefined' && (window.location.hostname.includes('run.app') || window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1')) {
+      return endpoint;
+    }
+    return `https://ais-pre-htphy24awtencdv6abtodd-54386008569.asia-southeast1.run.app${endpoint}`;
+  };
+
   // Fetch current WhatsApp daemon status from Express backend
   const fetchWaStatus = async () => {
     try {
-      const res = await fetch('/api/whatsapp/status');
+      const res = await fetch(getApiUrl('/api/whatsapp/status'));
       const data = await res.json();
       if (data) {
         setWaStatus(data.status || 'disconnected');
@@ -87,7 +95,7 @@ export const AdminDashboard: React.FC = () => {
   const handleWaLogout = async () => {
     setWaStatus('loading');
     try {
-      const res = await fetch('/api/whatsapp/logout', { method: 'POST' });
+      const res = await fetch(getApiUrl('/api/whatsapp/logout'), { method: 'POST' });
       const data = await res.json();
       if (data.success) {
         showToast('WhatsApp logged out and session folder purged.', 'info');
@@ -123,7 +131,7 @@ export const AdminDashboard: React.FC = () => {
         adminPhone: waAdminPhone
       };
 
-      const res = await fetch('/api/whatsapp/send', {
+      const res = await fetch(getApiUrl('/api/whatsapp/send'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(testPayload)

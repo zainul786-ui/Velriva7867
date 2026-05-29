@@ -873,7 +873,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       adminPhone: localStorage.getItem('velora_admin_whatsapp_number') || ''
     };
 
-    fetch('/api/whatsapp/send', {
+    let apiTargetUrl = '/api/whatsapp/send';
+    if (typeof window !== 'undefined' && !(window.location.hostname.includes('run.app') || window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1')) {
+      apiTargetUrl = 'https://ais-pre-htphy24awtencdv6abtodd-54386008569.asia-southeast1.run.app/api/whatsapp/send';
+    }
+
+    fetch(apiTargetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(waPayload)
