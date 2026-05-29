@@ -1,17 +1,6 @@
-const CACHE_NAME = 'velora-v1';
-const ASSETS = [
-  '/',
-  '/index.html',
-  '/icon.svg',
-  '/manifest.json'
-];
-
+// Self-destroying service worker to instantly release users from legacy caches
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
-    })
-  );
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
@@ -19,21 +8,12 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
+          console.log('🗑️ Force deleting cache store:', key);
+          return caches.delete(key);
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
 });
 
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      return cachedResponse || fetch(event.request).catch(() => {
-        // Fallback offline responses if possible
-      });
-    })
-  );
-});
+// No fetch intercept listeners are registered. All requests bypass to real network directly.

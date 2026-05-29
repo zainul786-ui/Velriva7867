@@ -7,18 +7,23 @@ import { Flame, Clock, Sparkles, TrendingUp, ShieldCheck, Heart, ArrowRight, Ins
 export const HomeScreen: React.FC = () => {
   const { products, navigateTo, recentlyViewed, promoBanners } = useAppState();
 
+  // States
+  const [activeBanner, setActiveBanner] = useState(0);
+  const [selectedCatalogCategory, setSelectedCatalogCategory] = useState<string>('all');
+
   // Filter lists based on metadata tags
   const trendingProducts = products.filter(p => p.isTrending);
   const featuredProducts = products.filter(p => p.isFeatured);
   const flashProducts = products.filter(p => p.isFlashSale);
 
+  const displayCatalogProducts = selectedCatalogCategory === 'all'
+    ? products
+    : products.filter(p => p.category === selectedCatalogCategory);
+
   // Map recently viewed product ids back to products
   const recentProducts = recentlyViewed
     .map(id => products.find(p => p.id === id))
     .filter((p): p is typeof products[0] => !!p);
-
-  // Carousel banner state
-  const [activeBanner, setActiveBanner] = useState(0);
   
   const activeBannersList = promoBanners && promoBanners.length > 0 ? promoBanners : [
     {
@@ -113,6 +118,25 @@ export const HomeScreen: React.FC = () => {
           )}
         </div>
       )}
+
+      {/* 2. Recent Arrivals Horizontal Scroll Rail - Exactly 5 to 6 Products */}
+      <div className="mt-5 px-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <h3 className="text-sm font-extrabold text-slate-900 tracking-tight">Recent Arrivals (New Launches)</h3>
+          </div>
+          <span className="text-[10px] font-bold text-slate-400">Swipe Left ➜</span>
+        </div>
+        <p className="text-[10px] text-slate-400 mt-1">Lately added luxury items & fresh inventory drops</p>
+        <div className="mt-3 flex gap-3.5 overflow-x-auto pb-1 scrollbar-none flex-nowrap">
+          {products.slice(-6).reverse().map(prod => (
+            <div key={prod.id} className="w-[150px] shrink-0">
+              <ProductCard product={prod} />
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* 3. Horizontal Category Rail Icons */}
       <div className="mt-5 px-4">
@@ -244,6 +268,50 @@ export const HomeScreen: React.FC = () => {
           {featuredProducts.map(prod => (
             <ProductCard key={prod.id} product={prod} />
           ))}
+        </div>
+      </div>
+
+      {/* 8.5 Master Products Catalog (Everything on Home Screen) */}
+      <div id="master-inventory-catalog" className="mt-8 px-4 font-sans text-left">
+        <div className="border-t border-slate-100 pt-6">
+          <div className="flex flex-col gap-1">
+            <h3 className="text-sm font-extrabold text-slate-900 tracking-tight">Our Master Inventory Catalog</h3>
+            <p className="text-[10px] text-slate-400 mt-0.5 font-medium leading-normal">
+              Explore your central dropshipping warehouse catalog. High quality photography and high-profit margins ready to market.
+            </p>
+          </div>
+
+          {/* Catalog Filter Toggles */}
+          <div className="mt-4 flex gap-2 overflow-x-auto pb-2 scrollbar-none flex-nowrap">
+            {CATEGORIES.map(cat => (
+              <button
+                key={cat.id}
+                id={`catalog-tab-${cat.slug}`}
+                onClick={() => setSelectedCatalogCategory(cat.slug)}
+                className={`px-3.5 py-1.5 shrink-0 rounded-xl text-[10px] font-black tracking-wide uppercase transition ${
+                  selectedCatalogCategory === cat.slug
+                    ? 'bg-slate-950 text-white shadow-md'
+                    : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900 border border-slate-150 shadow-xs'
+                }`}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
+
+          {/* Comprehensive Grid of All Filtered Products */}
+          {displayCatalogProducts.length > 0 ? (
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              {displayCatalogProducts.map(prod => (
+                <ProductCard key={prod.id} product={prod} />
+              ))}
+            </div>
+          ) : (
+            <div className="mt-8 text-center py-12 bg-slate-50 rounded-[24px] border border-dashed border-slate-200">
+              <span className="text-xl">🔍</span>
+              <p className="text-xs font-bold text-slate-400 mt-2">No products found under this filter.</p>
+            </div>
+          )}
         </div>
       </div>
 

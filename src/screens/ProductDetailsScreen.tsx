@@ -1,13 +1,68 @@
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../context/AppContext';
-import { Share2, Star, Shield, ArrowRight, Eye, Sparkles, MessageSquare, ShoppingBag, ShoppingCart, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
+import { Share2, Star, Shield, ArrowRight, Eye, Sparkles, MessageSquare, ShoppingBag, ShoppingCart, ChevronLeft, ChevronRight, ArrowLeft, X, Copy } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
 
 export const ProductDetailsScreen: React.FC = () => {
-  const { products, navigation, addToCart, navigateTo, toggleWishlist, wishlist, incrementProductViews } = useAppState();
+  const { products, navigation, addToCart, navigateTo, toggleWishlist, wishlist, incrementProductViews, showToast } = useAppState();
 
   const productId = navigation.params?.productId;
   const product = products.find(p => p.id === productId);
+
+  // States
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
+  // Generate our rich promotional dropship message format
+  const shareTitle = `✨ Velora Hot Deal: ${product ? product.name : ''}`;
+  const deepLink = `${window.location.protocol}//${window.location.host}/?productId=${product ? product.id : ''}`;
+  const shareBody = product ? `*${product.name.toUpperCase()}* 🛍️
+━━━━━━━━━━━━━━━━━━━
+🔥 *Trending Premium Quality Product*
+
+📝 *Product Description:*
+${product.description}
+
+💰 *Exclusive Reselling Price:* ₹${product.price}
+📉 *Discount Saved:* ${product.discount}% OFF (MRP: ₹${product.oldPrice})
+
+📌 *Live Catalog Reference (Image Link):*
+${product.image}
+
+🛒 *Place Your Instant Order Here:*
+👉 ${deepLink}
+━━━━━━━━━━━━━━━━━━━
+_Marketed by Velora Dropshipping Network_` : '';
+
+  const handleCopyShare = async () => {
+    try {
+      await navigator.clipboard.writeText(shareBody);
+      showToast('Rich Product specifications and direct link copied!', 'success');
+    } catch (e) {
+      showToast('Failed to copy. Try selecting manually', 'error');
+    }
+  };
+
+  const handleWhatsAppShare = () => {
+    const encodedText = encodeURIComponent(shareBody);
+    window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+  };
+
+  const handleNativeShare = async () => {
+    if (navigator?.share) {
+      try {
+        await navigator.share({
+          title: product.name,
+          text: shareBody,
+          url: deepLink
+        });
+        showToast('Shared successfully!', 'success');
+      } catch (err) {
+        console.warn('Native sharing rejected:', err);
+      }
+    } else {
+      handleCopyShare();
+    }
+  };
 
   useEffect(() => {
     if (productId) {
@@ -142,17 +197,12 @@ export const ProductDetailsScreen: React.FC = () => {
           </div>
         )}
 
-        {/* Quick share button mock */}
+        {/* Share Button (triggers custom Share Sheet popup modal) */}
         <button
           id="share-product-btn"
-          onClick={() => {
-            if (navigator?.share) {
-              navigator.share({ title: product.name, text: product.description });
-            } else {
-              alert('Copied product share description details to clipboard!');
-            }
-          }}
-          className="absolute top-4 right-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-slate-650 shadow-md backdrop-blur-md transition hover:bg-white active:scale-95 cursor-pointer"
+          onClick={() => setIsShareModalOpen(true)}
+          className="absolute top-4 right-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-slate-800 shadow-md backdrop-blur-md transition hover:bg-white active:scale-95 cursor-pointer animate-pulse"
+          title="Share Product"
         >
           <Share2 className="h-4.5 w-4.5" />
         </button>
@@ -399,6 +449,99 @@ export const ProductDetailsScreen: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* RICH PRODUCT SHARE CONTAINER SHEET MODAL */}
+      {isShareModalOpen && (
+        <div 
+          id="product-share-sheet-modal"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-950/75 p-4 backdrop-blur-xs font-sans text-left"
+          onClick={() => setIsShareModalOpen(false)}
+        >
+          <div 
+            className="w-full max-w-sm rounded-[28px] bg-white border border-slate-100 p-6 shadow-2xl relative animate-slide-up sm:animate-fade-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-50 mb-4">
+              <div className="flex items-center gap-2">
+                <span className="p-1 px-2.5 bg-amber-50 rounded-lg text-xs">🚀</span>
+                <h4 className="text-sm font-black text-slate-900">Share Product Deal</h4>
+              </div>
+              <button 
+                onClick={() => setIsShareModalOpen(false)}
+                className="h-8 w-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-700 active:scale-95 transition"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Product Card Preview inside Modal */}
+            <div className="bg-slate-50 rounded-2xl p-4 mb-4 border border-slate-100 flex gap-3 text-left">
+              <img 
+                src={product.image} 
+                alt={product.name} 
+                className="w-16 h-16 rounded-xl object-cover border border-slate-200 shrink-0"
+                referrerPolicy="no-referrer"
+              />
+              <div className="min-w-0 flex-1 flex flex-col justify-between">
+                <div>
+                  <h5 className="text-xs font-black text-slate-900 truncate leading-tight">{product.name}</h5>
+                  <p className="text-[10px] text-slate-400 font-medium truncate mt-0.5 leading-none">{product.category}</p>
+                </div>
+                <div className="flex items-baseline gap-1.5 mt-1">
+                  <span className="text-xs font-black text-slate-955 text-slate-900 leading-none">₹{product.price}</span>
+                  <span className="text-[9.5px] text-slate-400 line-through leading-none">₹{product.oldPrice}</span>
+                  <span className="text-[9.5px] font-extrabold text-rose-500 bg-rose-50 px-1 rounded leading-none">{product.discount}% OFF</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Generated Message Visual Payload Preview */}
+            <div className="mb-4">
+              <span className="text-[9.5px] font-black uppercase text-slate-400 tracking-wider block mb-1.5">Share Template Preview</span>
+              <div className="bg-slate-950 text-slate-300 font-mono text-[9px] p-3 rounded-xl border border-slate-800/80 max-h-32 overflow-y-auto leading-normal text-left whitespace-pre-wrap select-all">
+                {shareBody}
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="space-y-2 pt-2 border-t border-slate-50">
+              <button
+                type="button"
+                onClick={handleWhatsAppShare}
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-extrabold text-xs rounded-xl transition shadow-xs cursor-pointer"
+              >
+                <span>💬 Direct Share to WhatsApp</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleCopyShare}
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-slate-950 hover:bg-slate-900 active:scale-95 text-white font-extrabold text-xs rounded-xl transition cursor-pointer"
+              >
+                <Copy className="h-3.5 w-3.5" />
+                <span>Copy Rich Details Payload</span>
+              </button>
+
+              {navigator?.share && (
+                <button
+                  type="button"
+                  onClick={handleNativeShare}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 border border-slate-200 hover:bg-slate-50 active:scale-95 text-slate-700 font-extrabold text-xs rounded-xl transition cursor-pointer"
+                >
+                  <Share2 className="h-3.5 w-3.5" />
+                  <span>Open Native Share Options</span>
+                </button>
+              )}
+            </div>
+
+            {/* Helpful Helper footer */}
+            <p className="text-[9px] text-slate-400 mt-3 text-center font-medium">
+              Customers who open this link will land directly on this product page.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

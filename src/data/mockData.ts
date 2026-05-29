@@ -110,6 +110,87 @@ export const MOCK_PRODUCTS: Product[] = [
     reviews: []
   },
   {
+    id: 'prod_11',
+    name: 'Velriva Pro ANC Headphones Max',
+    price: 149,
+    oldPrice: 299,
+    discount: 50,
+    rating: 4.9,
+    image: 'https://images.unsplash.com/photo-1583394838336-acd977736f90?w=600&auto=format&fit=crop',
+    images: [
+      'https://images.unsplash.com/photo-1583394838336-acd977736f90?w=600&auto=format&fit=crop'
+    ],
+    category: 'headphones',
+    description: 'The pinnacle of over-ear audio engineering. Features titanium composite diaphragms, high-fidelity spatial audio tracking, custom active EQ tuning, and ultra-plush perforated leather cups.',
+    viewsCount: 5410,
+    likesCount: 612,
+    ordersCount: 312,
+    sizes: ['Standard'],
+    colors: [
+      { name: 'Space Gray', hex: '#334155' },
+      { name: 'Gold Accent', hex: '#e2e8f0' }
+    ],
+    isFeatured: true,
+    isTrending: true,
+    isFlashSale: false,
+    stock: 12,
+    reviews: []
+  },
+  {
+    id: 'prod_12',
+    name: 'StudioBeat Vintage Leather Headphones',
+    price: 79,
+    oldPrice: 159,
+    discount: 50,
+    rating: 4.5,
+    image: 'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=600&auto=format&fit=crop',
+    images: [
+      'https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=600&auto=format&fit=crop'
+    ],
+    category: 'headphones',
+    description: 'Retro aesthetic meets modern acoustics. Premium calfskin leather casing with hand-stitched detailing, copper accents, and 45mm studio drivers calibrated for crisp highs and deep midranges.',
+    viewsCount: 1890,
+    likesCount: 194,
+    ordersCount: 78,
+    sizes: ['Standard'],
+    colors: [
+      { name: 'Classic Brown', hex: '#78350f' },
+      { name: 'Vintage Black', hex: '#1c1917' }
+    ],
+    isFeatured: false,
+    isTrending: false,
+    isFlashSale: false,
+    stock: 20,
+    reviews: []
+  },
+  {
+    id: 'prod_13',
+    name: 'AeroBuds Over-Ear AirFlow Lite',
+    price: 39,
+    oldPrice: 79,
+    discount: 50,
+    rating: 4.4,
+    image: 'https://images.unsplash.com/photo-1484704849700-f032a568e944?w=600&auto=format&fit=crop',
+    images: [
+      'https://images.unsplash.com/photo-1484704849700-f032a568e944?w=600&auto=format&fit=crop'
+    ],
+    category: 'headphones',
+    description: 'Designed for minimal weight and max ventilation. Fully breathable mesh headband paired with pressure-relieving foam cups. Engineered for long gaming sessions or desk work.',
+    viewsCount: 1250,
+    likesCount: 88,
+    ordersCount: 41,
+    sizes: ['Standard'],
+    colors: [
+      { name: 'Ice White', hex: '#f1f5f9' },
+      { name: 'Neon Green', hex: '#84cc16' }
+    ],
+    isFeatured: false,
+    isTrending: false,
+    isFlashSale: true,
+    stock: 60,
+    reviews: []
+  },
+  {
     id: 'prod_3',
     name: 'Velriva SuperFast 65W GaN Charger',
     price: 25,
@@ -168,6 +249,111 @@ export const MOCK_PRODUCTS: Product[] = [
     isTrending: false,
     isFlashSale: true,
     stock: 18,
+    reviews: []
+  },
+  {
+    id: 'prod_14',
+    name: 'VoltCharge 100W Quad-Port GaN Block',
+    price: 49,
+    oldPrice: 99,
+    discount: 50,
+    rating: 4.8,
+    image: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=600&auto=format&fit=crop',
+    images: [
+      'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=600&auto=format&fit=crop'
+    ],
+    category: 'charger',
+    description: 'The ultimate power brick. Packs 100W of Gallium Nitride efficiency into a highly transportable wall adapter. Supports fast-charging three laptops and one phone concurrently.',
+    viewsCount: 3120,
+    likesCount: 245,
+    ordersCount: 180,
+    sizes: ['US Plug', 'UK Plug', 'EU Plug'],
+    colors: [
+      { name: 'Deep Carbon', hex: '#1e293b' }
+    ],
+    isFeatured: true,
+    isTrending: true,
+    isFlashSale: false,
+    stock: 54,
+    reviews: []
+  },
+  {
+    id: 'prod_15',
+    name: 'PowerGrid 20000mAh Ultra-Slim Bank',
+    price: 29,
+    oldPrice: 59,
+    discount: 51,
+    rating: 4.6,
+    image: 'https://images.unsplash.com/photo-1609592424109-dd9892f1b17c?w=600&auto=format&fit=crop',
+    images: [
+      'https://images.unsplash.com/photo-1609592424109-dd9892f1b17c?w=600&auto=format&fit=crop'
+    ],
+    category: 'charger',
+    description: 'Huge capacity inside a pocketable, sleek frame. High density lithium polymer core allows charging an iPhone 15 up to 5 times. Features digital battery percentage display array.',
+    viewsCount: 2890,
+    likesCount: 198,
+    ordersCount: 142,
+    sizes: ['Standard'],
+    colors: [
+      { name: 'Carbon Black', hex: '#0f172a' },
+      { name: 'Glacier Blue', hex: '#38bdf8' }
+    ],
+    isFeatured: false,
+    isTrending: true,
+    isFlashSale: true,
+    stock: 90,
+    reviews: []
+  },
+  {
+    id: 'prod_16',
+    name: 'MagSafe AirVent Intelligent Car Mount',
+    price: 19,
+    oldPrice: 39,
+    discount: 51,
+    rating: 4.5,
+    image: 'https://images.unsplash.com/photo-1586105251261-72a756497a11?w=600&auto=format&fit=crop',
+    images: [
+      'https://images.unsplash.com/photo-1586105251261-72a756497a11?w=600&auto=format&fit=crop'
+    ],
+    category: 'charger',
+    description: 'Auto-adjusting magnetic ventilation clamp. Packs an embedded 15W Qi wireless receiver coil that holds iPhones firmly on rough paths and bumpy roads while powering them up.',
+    viewsCount: 1740,
+    likesCount: 110,
+    ordersCount: 89,
+    sizes: ['Standard'],
+    colors: [
+      { name: 'Graphite', hex: '#4b5563' }
+    ],
+    isFeatured: false,
+    isTrending: false,
+    isFlashSale: false,
+    stock: 40,
+    reviews: []
+  },
+  {
+    id: 'prod_17',
+    name: 'MultiStream 4-in-1 Charging Workspace Pad',
+    price: 24,
+    oldPrice: 49,
+    discount: 51,
+    rating: 4.6,
+    image: 'https://images.unsplash.com/photo-1616440347437-b1c73416efc2?w=600&auto=format&fit=crop',
+    images: [
+      'https://images.unsplash.com/photo-1616440347437-b1c73416efc2?w=600&auto=format&fit=crop'
+    ],
+    category: 'charger',
+    description: 'Charge everything in one elegant spot. Flat lay silicone docking solution powering wireless phone, standard buds, legacy smartwatches, and extra USB accessory port.',
+    viewsCount: 1920,
+    likesCount: 154,
+    ordersCount: 75,
+    sizes: ['Standard'],
+    colors: [
+      { name: 'Minimal Gray', hex: '#9ca3af' }
+    ],
+    isFeatured: false,
+    isTrending: false,
+    isFlashSale: false,
+    stock: 32,
     reviews: []
   },
   {
@@ -230,6 +416,113 @@ export const MOCK_PRODUCTS: Product[] = [
     isTrending: false,
     isFlashSale: false,
     stock: 9,
+    reviews: []
+  },
+  {
+    id: 'prod_18',
+    name: 'AuraFlow Pure Bass Wireless Buds',
+    price: 49,
+    oldPrice: 99,
+    discount: 50,
+    rating: 4.7,
+    image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=600&auto=format&fit=crop',
+    images: [
+      'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=600&auto=format&fit=crop'
+    ],
+    category: 'airpods',
+    description: 'Custom acoustic signature built around deeply resonant sub-bass. Designed with magnetic snap lock cases, tactile push navigation controls, and clear voice calling microphone array.',
+    viewsCount: 2210,
+    likesCount: 184,
+    ordersCount: 102,
+    sizes: ['Standard'],
+    colors: [
+      { name: 'Midnight Blue', hex: '#1d4ed8' },
+      { name: 'Dark Slate', hex: '#1e293b' }
+    ],
+    isFeatured: true,
+    isTrending: true,
+    isFlashSale: false,
+    stock: 25,
+    reviews: []
+  },
+  {
+    id: 'prod_19',
+    name: 'HydroPulse Sports Buds IPX8',
+    price: 34,
+    oldPrice: 69,
+    discount: 50,
+    rating: 4.6,
+    image: 'https://images.unsplash.com/photo-1558244661-d248897f7bc4?w=600&auto=format&fit=crop',
+    images: [
+      'https://images.unsplash.com/photo-1558244661-d248897f7bc4?w=600&auto=format&fit=crop'
+    ],
+    category: 'airpods',
+    description: 'Sweatproof and rainproof sport audio system. Wrap ear-hook loop structure prevents falls during jogging, sprinting or muscle exercises. Includes physical action triggers.',
+    viewsCount: 1690,
+    likesCount: 120,
+    ordersCount: 56,
+    sizes: ['Standard'],
+    colors: [
+      { name: 'Acid Green', hex: '#a3e635' },
+      { name: 'Carbon Black', hex: '#000000' }
+    ],
+    isFeatured: false,
+    isTrending: false,
+    isFlashSale: true,
+    stock: 30,
+    reviews: []
+  },
+  {
+    id: 'prod_20',
+    name: 'MiniPod Pocket Sound Speaker',
+    price: 29,
+    oldPrice: 59,
+    discount: 50,
+    rating: 4.5,
+    image: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=600&auto=format&fit=crop',
+    images: [
+      'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=600&auto=format&fit=crop'
+    ],
+    category: 'airpods',
+    description: 'Small size, monumental volume performance. Sleek cylindrical shell with robust passive alloy bass radiator disk. Plays up to 10 hours of rich acoustics on single charger.',
+    viewsCount: 1140,
+    likesCount: 95,
+    ordersCount: 68,
+    sizes: ['Standard'],
+    colors: [
+      { name: 'Ferrari Crimson', hex: '#dc2626' },
+      { name: 'Charcoal Matte', hex: '#374151' }
+    ],
+    isFeatured: false,
+    isTrending: false,
+    isFlashSale: false,
+    stock: 45,
+    reviews: []
+  },
+  {
+    id: 'prod_21',
+    name: 'Velriva SoundBar Mini Home Theater',
+    price: 119,
+    oldPrice: 240,
+    discount: 50,
+    rating: 4.8,
+    image: 'https://images.unsplash.com/photo-1545454675-3531b543be5d?w=600&auto=format&fit=crop',
+    images: [
+      'https://images.unsplash.com/photo-1545454675-3531b543be5d?w=600&auto=format&fit=crop'
+    ],
+    category: 'airpods',
+    description: 'Transform your small screen or computing desk into a spatial movie theater. Packs 4-driver arrays and dual bass sub-woofers inside a slim premium aluminum grill panel.',
+    viewsCount: 2310,
+    likesCount: 220,
+    ordersCount: 91,
+    sizes: ['Standard'],
+    colors: [
+      { name: 'Brushed Charcoal', hex: '#1f2937' }
+    ],
+    isFeatured: true,
+    isTrending: false,
+    isFlashSale: false,
+    stock: 15,
     reviews: []
   },
   {
@@ -296,6 +589,112 @@ export const MOCK_PRODUCTS: Product[] = [
     reviews: []
   },
   {
+    id: 'prod_22',
+    name: 'Titan Titanium Rugged Smartwatch Pro',
+    price: 139,
+    oldPrice: 279,
+    discount: 50,
+    rating: 4.9,
+    image: 'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=600&auto=format&fit=crop',
+    images: [
+      'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=600&auto=format&fit=crop'
+    ],
+    category: 'watches',
+    description: 'Built for extreme adventures. Crafted from forged aerospace titanium Grade-5 alloy, offline compass mappings, up to 15 days active battery cycles, and high pressure double-gasket glass seal.',
+    viewsCount: 4120,
+    likesCount: 512,
+    ordersCount: 198,
+    sizes: ['46mm'],
+    colors: [
+      { name: 'Titanium Slate', hex: '#64748b' }
+    ],
+    isFeatured: true,
+    isTrending: true,
+    isFlashSale: false,
+    stock: 8,
+    reviews: []
+  },
+  {
+    id: 'prod_23',
+    name: 'ChronoCurve Premium Leather Analogue',
+    price: 99,
+    oldPrice: 199,
+    discount: 50,
+    rating: 4.8,
+    image: 'https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=600&auto=format&fit=crop',
+    images: [
+      'https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=600&auto=format&fit=crop'
+    ],
+    category: 'watches',
+    description: 'Curated sophisticated statement watch. High quality genuine English leather wrist strap paired with a solid mechanical winding dial wheel. Sapphire crystal shield prevents scrapes.',
+    viewsCount: 2250,
+    likesCount: 174,
+    ordersCount: 81,
+    sizes: ['Standard'],
+    colors: [
+      { name: 'Saddle Tan', hex: '#b45309' },
+      { name: 'Raven Black', hex: '#0f172a' }
+    ],
+    isFeatured: false,
+    isTrending: false,
+    isFlashSale: false,
+    stock: 16,
+    reviews: []
+  },
+  {
+    id: 'prod_24',
+    name: 'FitPulse Sport Smart Bracelet',
+    price: 39,
+    oldPrice: 79,
+    discount: 50,
+    rating: 4.5,
+    image: 'https://images.unsplash.com/photo-1575311373937-040b8e1fd5b6?w=600&auto=format&fit=crop',
+    images: [
+      'https://images.unsplash.com/photo-1575311373937-040b8e1fd5b6?w=600&auto=format&fit=crop'
+    ],
+    category: 'watches',
+    description: 'Minimal weight health companion. Continuous automatic caloric and activity tracing with responsive step metrics, incoming call warning vibrating buzzes, and water protection.',
+    viewsCount: 1840,
+    likesCount: 120,
+    ordersCount: 95,
+    sizes: ['One Size'],
+    colors: [
+      { name: 'Active Pink', hex: '#ec4899' },
+      { name: 'Graphite', hex: '#1f2937' }
+    ],
+    isFeatured: false,
+    isTrending: false,
+    isFlashSale: true,
+    stock: 50,
+    reviews: []
+  },
+  {
+    id: 'prod_25',
+    name: 'Velriva Classique Rose Gold Watch',
+    price: 110,
+    oldPrice: 220,
+    discount: 50,
+    rating: 4.8,
+    image: 'https://images.unsplash.com/photo-1612817159949-195b6eb9e31a?w=600&auto=format&fit=crop',
+    images: [
+      'https://images.unsplash.com/photo-1612817159949-195b6eb9e31a?w=600&auto=format&fit=crop'
+    ],
+    category: 'watches',
+    description: 'An outstanding luxury companion for formal meetings or wedding evenings. Polished rose-gold metallic mesh band and minimalist hour pointers create unmatched sophistication.',
+    viewsCount: 2910,
+    likesCount: 310,
+    ordersCount: 124,
+    sizes: ['Standard'],
+    colors: [
+      { name: 'Rose Gold', hex: '#fda4af' }
+    ],
+    isFeatured: true,
+    isTrending: false,
+    isFlashSale: false,
+    stock: 9,
+    reviews: []
+  },
+  {
     id: 'prod_9',
     name: 'Signature Noire Elixir Perfume',
     price: 95,
@@ -353,6 +752,84 @@ export const MOCK_PRODUCTS: Product[] = [
     isTrending: true,
     isFlashSale: false,
     stock: 11,
+    reviews: []
+  },
+  {
+    id: 'prod_26',
+    name: 'Oceano Blue Intense Fresh Perfume',
+    price: 85,
+    oldPrice: 169,
+    discount: 50,
+    rating: 4.7,
+    image: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=600&auto=format&fit=crop',
+    images: [
+      'https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=600&auto=format&fit=crop'
+    ],
+    category: 'perfume',
+    description: 'A breath of frozen high-tide ocean. Delicately calibrated lavender leaf, sea-mist salt signatures, and refreshing white grapefruit zest base notes. Gives unmatched daytime energy.',
+    viewsCount: 2890,
+    likesCount: 241,
+    ordersCount: 134,
+    sizes: ['100ml'],
+    colors: [
+      { name: 'Sea Marine', hex: '#60a5fa' }
+    ],
+    isFeatured: true,
+    isTrending: true,
+    isFlashSale: false,
+    stock: 25,
+    reviews: []
+  },
+  {
+    id: 'prod_27',
+    name: 'Mystic Rose Saffron Luxury EDP',
+    price: 120,
+    oldPrice: 240,
+    discount: 50,
+    rating: 4.8,
+    image: 'https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=600&auto=format&fit=crop',
+    images: [
+      'https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=600&auto=format&fit=crop'
+    ],
+    category: 'perfume',
+    description: 'An elegant oriental secret. Opens with Damascus rose bouquets paired with spicy organic cashmere saffron strands, transitioning smoothly to smoldering warm sandalwood logs.',
+    viewsCount: 1980,
+    likesCount: 189,
+    ordersCount: 74,
+    sizes: ['50ml', '100ml'],
+    colors: [
+      { name: 'Saffron Maroon', hex: '#991b1b' }
+    ],
+    isFeatured: false,
+    isTrending: false,
+    isFlashSale: false,
+    stock: 10,
+    reviews: []
+  },
+  {
+    id: 'prod_28',
+    name: 'Santal Gold Luxury Cedar EDP',
+    price: 105,
+    oldPrice: 210,
+    discount: 50,
+    rating: 4.9,
+    image: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=600&auto=format&fit=crop',
+    images: [
+      'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=600&auto=format&fit=crop'
+    ],
+    category: 'perfume',
+    description: 'Commanding charisma. Packs layers of deep Texas dry cedarwood, leather hide essence, and warm tobacco flower extract. An absolute compliment-gatherer with extreme performance projection.',
+    viewsCount: 3100,
+    likesCount: 412,
+    ordersCount: 210,
+    sizes: ['100ml'],
+    colors: [
+      { name: 'Amber Glow', hex: '#ca8a04' }
+    ],
+    isFeatured: true,
+    isTrending: true,
+    isFlashSale: false,
+    stock: 14,
     reviews: []
   }
 ];

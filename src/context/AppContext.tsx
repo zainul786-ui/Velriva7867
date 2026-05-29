@@ -178,6 +178,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Load initial data from localStorage on Mount
   useEffect(() => {
+    // Intercept and parse deep linked product ID if present in browser URL query string
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const sharedId = urlParams.get('productId');
+      if (sharedId) {
+        sessionStorage.setItem('velriva_shared_product_id', sharedId);
+        // Sanitize browser URL for a cleaner address bar experience
+        const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+      }
+    } catch (e) {
+      console.warn("Deep linking parser non-critical error:", e);
+    }
+
     // Products
     const storedProducts = localStorage.getItem('velriva_products');
     if (storedProducts) {
@@ -187,7 +201,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           ['outerwear', 'footwear', 'accessories', 'tech'].includes(p.category) && 
           !['headphones', 'charger', 'airpods', 'watches', 'perfume'].includes(p.category)
         );
-        if (hasOldCategories) {
+        if (hasOldCategories || parsed.length < MOCK_PRODUCTS.length) {
           localStorage.setItem('velriva_products', JSON.stringify(MOCK_PRODUCTS));
           setProducts(MOCK_PRODUCTS);
         } else {
@@ -509,18 +523,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Navigation Logic
   const navigateTo = (screen: ScreenName, params?: any) => {
+    let finalScreen = screen;
+    let finalParams = params;
+
+    // Automatic Deep Link redirection
+    if (finalScreen === 'home') {
+      try {
+        const cachedSharedId = sessionStorage.getItem('velriva_shared_product_id');
+        if (cachedSharedId) {
+          sessionStorage.removeItem('velriva_shared_product_id'); // consume deep link
+          finalScreen = 'productDetails';
+          finalParams = { productId: cachedSharedId };
+        }
+      } catch (e) {
+        console.warn("Deep link consumption non-critical error:", e);
+      }
+    }
+
     setNavigation(prev => {
       // If we are navigating to home or splash, we can reset history stack
       let newHistory = [...prev.history];
-      if (screen === 'home' || screen === 'splash') {
-        newHistory = [{ screen, params }];
+      if (finalScreen === 'home' || finalScreen === 'splash') {
+        newHistory = [{ screen: finalScreen, params: finalParams }];
       } else {
-        newHistory.push({ screen, params });
+        newHistory.push({ screen: finalScreen, params: finalParams });
       }
       return {
-        currentScreen: screen,
+        currentScreen: finalScreen,
         history: newHistory,
-        params,
+        params: finalParams,
       };
     });
   };

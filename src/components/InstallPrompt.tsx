@@ -16,7 +16,7 @@ export const InstallPrompt: React.FC = () => {
 
   const handleInstall = () => {
     setIsVisible(false);
-    alert('Thank you! To install VELORA: Tap the browser share/menu button and select "Add to Home Screen" to launch with full fast-cache offline mode.');
+    alert('Thank you! To install VELORA: Tap the browser share/menu button and select "Add to Home Screen" to launch as an app with lightning-fast direct access!');
   };
 
   const handleDismiss = () => {
