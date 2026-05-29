@@ -52,6 +52,7 @@ export interface Product {
   isTrending?: boolean;
   isFlashSale?: boolean;
   stock: number;
+  supplierLink?: string;
 }
 
 export interface CartItem {

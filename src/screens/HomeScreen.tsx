@@ -5,7 +5,7 @@ import { CATEGORIES } from '../data/mockData';
 import { Flame, Clock, Sparkles, TrendingUp, ShieldCheck, Heart, ArrowRight, Instagram, Youtube, Mail } from 'lucide-react';
 
 export const HomeScreen: React.FC = () => {
-  const { products, navigateTo, recentlyViewed, promoBanners } = useAppState();
+  const { products, navigateTo, recentlyViewed, promoBanners, supportInstagram, supportYoutube, supportEmail, supportPhone } = useAppState();
 
   // States
   const [activeBanner, setActiveBanner] = useState(0);
@@ -328,34 +328,40 @@ export const HomeScreen: React.FC = () => {
 
         <div className="mt-4 grid grid-cols-3 gap-2">
           <a
-            href="https://www.instagram.com/velora_store.786?igsh=MWJlbzVjOG96aWFzMg=="
+            href={supportInstagram}
             target="_blank"
             rel="noopener noreferrer"
             className="flex flex-col items-center justify-center py-3 px-1 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100/70 hover:border-slate-300 transition active:scale-95 cursor-pointer text-center"
           >
             <Instagram className="h-5 w-5 text-pink-600" />
             <span className="text-[10px] font-black text-slate-800 mt-2">Instagram</span>
-            <span className="text-[8px] text-slate-400 font-bold mt-0.5 truncate max-w-full">@velora_store</span>
+            <span className="text-[8px] text-slate-404 text-slate-400 font-bold mt-0.5 truncate max-w-full">
+              {supportInstagram.split('instagram.com/')[1]?.split('?')[0] || 'Instagram'}
+            </span>
           </a>
 
           <a
-            href="https://youtube.com/@velriva?si=je8rcw_kLp1s7BdE"
+            href={supportYoutube}
             target="_blank"
             rel="noopener noreferrer"
             className="flex flex-col items-center justify-center py-3 px-1 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100/70 hover:border-slate-300 transition active:scale-95 cursor-pointer text-center"
           >
             <Youtube className="h-5 w-5 text-red-600" />
             <span className="text-[10px] font-black text-slate-800 mt-2">YouTube</span>
-            <span className="text-[8px] text-slate-400 font-bold mt-0.5 truncate max-w-full">@velriva</span>
+            <span className="text-[8px] text-slate-404 text-slate-400 font-bold mt-0.5 truncate max-w-full">
+              {supportYoutube.split('youtube.com/')[1] || 'YouTube'}
+            </span>
           </a>
 
           <a
-            href="mailto:velora068@gmail.com"
+            href={`mailto:${supportEmail}`}
             className="flex flex-col items-center justify-center py-3 px-1 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100/70 hover:border-slate-300 transition active:scale-95 cursor-pointer text-center"
           >
             <Mail className="h-5 w-5 text-indigo-600" />
             <span className="text-[10px] font-black text-slate-800 mt-2">Gmail support</span>
-            <span className="text-[8px] text-slate-400 font-bold mt-0.5 truncate max-w-full">velora068</span>
+            <span className="text-[8px] text-slate-404 text-slate-400 font-bold mt-0.5 truncate max-w-full">
+              {supportEmail.split('@')[0]}
+            </span>
           </a>
         </div>
 
@@ -363,7 +369,7 @@ export const HomeScreen: React.FC = () => {
         <button
           onClick={() => {
             const text = encodeURIComponent('Hello VELORA dropshipping support! I am looking for details about the latest trending inventory.');
-            window.open(`https://wa.me/919690986010?text=${text}`, '_blank');
+            window.open(`https://wa.me/${supportPhone.replace(/\D/g, '')}?text=${text}`, '_blank');
           }}
           className="w-full mt-3 py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[11px] tracking-wide uppercase transition active:scale-[0.98] cursor-pointer shadow-xs flex items-center justify-center gap-2"
         >

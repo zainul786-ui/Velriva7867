@@ -71,6 +71,13 @@ interface AppContextType {
   // Website custom logo (base64 or URL)
   logo: string;
   updateLogo: (base64OrUrl: string) => void;
+
+  // Customer support channels (Admin configurable)
+  supportInstagram: string;
+  supportYoutube: string;
+  supportEmail: string;
+  supportPhone: string;
+  updateSupportLinks: (links: { supportInstagram: string; supportYoutube: string; supportEmail: string; supportPhone: string }) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -174,6 +181,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } else {
       showToast('Brand Logo updated (Local/Offline mode)!', 'success');
     }
+  };
+
+  // Configurable Support Channels
+  const [supportInstagram, setSupportInstagram] = useState<string>(() => {
+    return localStorage.getItem('velora_support_instagram') || 'https://www.instagram.com/velora_store.786?igsh=MWJlbzVjOG96aWFzMg==';
+  });
+  const [supportYoutube, setSupportYoutube] = useState<string>(() => {
+    return localStorage.getItem('velora_support_youtube') || 'https://youtube.com/@velriva?si=je8rcw_kLp1s7BdE';
+  });
+  const [supportEmail, setSupportEmail] = useState<string>(() => {
+    return localStorage.getItem('velora_support_email') || 'velora068@gmail.com';
+  });
+  const [supportPhone, setSupportPhone] = useState<string>(() => {
+    return localStorage.getItem('velora_admin_whatsapp_number') || '919690986010';
+  });
+
+  const updateSupportLinks = (links: { supportInstagram: string; supportYoutube: string; supportEmail: string; supportPhone: string }) => {
+    setSupportInstagram(links.supportInstagram);
+    setSupportYoutube(links.supportYoutube);
+    setSupportEmail(links.supportEmail);
+    setSupportPhone(links.supportPhone);
+
+    localStorage.setItem('velora_support_instagram', links.supportInstagram);
+    localStorage.setItem('velora_support_youtube', links.supportYoutube);
+    localStorage.setItem('velora_support_email', links.supportEmail);
+    localStorage.setItem('velora_admin_whatsapp_number', links.supportPhone);
+
+    showToast('Customer Support channels updated successfully!', 'success');
   };
 
   // Load initial data from localStorage on Mount
@@ -1329,6 +1364,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         showToast,
         logo,
         updateLogo,
+        supportInstagram,
+        supportYoutube,
+        supportEmail,
+        supportPhone,
+        updateSupportLinks,
       }}
     >
       {children}

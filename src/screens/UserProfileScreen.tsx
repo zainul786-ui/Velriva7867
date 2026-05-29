@@ -3,7 +3,7 @@ import { useAppState } from '../context/AppContext';
 import { User, ShoppingBag, ShieldCheck, Settings, LogOut, ChevronRight, HelpCircle, Truck, KeySquare, Edit2, Check, X, Instagram, Youtube, Mail } from 'lucide-react';
 
 export const UserProfileScreen: React.FC = () => {
-  const { currentUser, logoutUser, navigateTo, orders, isAdmin, updateUserProfile } = useAppState();
+  const { currentUser, logoutUser, navigateTo, orders, isAdmin, updateUserProfile, supportInstagram, supportYoutube, supportPhone, supportEmail } = useAppState();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(currentUser.name || '');
@@ -43,38 +43,38 @@ export const UserProfileScreen: React.FC = () => {
     {
       id: 'profile-help',
       title: 'Customer Support on WhatsApp',
-      subtitle: 'Instant Chat Assistance 24/7',
+      subtitle: `Instant Assistance via +${supportPhone}`,
       icon: HelpCircle,
       action: () => {
         const text = encodeURIComponent('Hello VELORA support! I need assistance with my order/account.');
-        window.open(`https://wa.me/919690986010?text=${text}`, '_blank');
+        window.open(`https://wa.me/${supportPhone.replace(/\D/g, '')}?text=${text}`, '_blank');
       },
     },
     {
       id: 'profile-instagram',
       title: 'Instagram Support & Store',
-      subtitle: '@velora_store.786',
+      subtitle: `@${supportInstagram.split('instagram.com/')[1]?.split('?')[0] || 'velora_store'}`,
       icon: Instagram,
       action: () => {
-        window.open('https://www.instagram.com/velora_store.786?igsh=MWJlbzVjOG96aWFzMg==', '_blank');
+        window.open(supportInstagram, '_blank');
       },
     },
     {
       id: 'profile-youtube',
       title: 'YouTube Support Desk & Channel',
-      subtitle: '@velriva resource channel',
+      subtitle: `@${supportYoutube.split('youtube.com/')[1] || 'velriva'}`,
       icon: Youtube,
       action: () => {
-        window.open('https://youtube.com/@velriva?si=je8rcw_kLp1s7BdE', '_blank');
+        window.open(supportYoutube, '_blank');
       },
     },
     {
       id: 'profile-email',
       title: 'Official Email Assistance',
-      subtitle: 'velora068@gmail.com',
+      subtitle: supportEmail,
       icon: Mail,
       action: () => {
-        window.open('mailto:velora068@gmail.com', '_blank');
+        window.open(`mailto:${supportEmail}`, '_blank');
       },
     }
   ];

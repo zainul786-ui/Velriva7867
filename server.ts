@@ -67,7 +67,8 @@ async function startServer() {
           const qty = it.quantity || 1;
           const price = it.product?.price || 0;
           const size = it.selectedSize ? ` [Size: ${it.selectedSize}]` : '';
-          return `• ${prodName} × ${qty}${size} (₹${price * qty})`;
+          const supplier = it.product?.supplierLink ? `\n   🔗 Sourcing Link: ${it.product.supplierLink}` : '';
+          return `• ${prodName} × ${qty}${size} (₹${price * qty})${supplier}`;
         }).join('\n')
       : '• No items attached.';
 

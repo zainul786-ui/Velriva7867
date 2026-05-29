@@ -114,20 +114,32 @@ class WhatsAppService {
   }
 
   public async logout(): Promise<void> {
+    console.log('🔌 Running force logout and resetting WhatsApp service...');
     try {
       if (this.sock) {
-        await this.sock.logout();
+        this.sock.ev.removeAllListeners('creds.update');
+        this.sock.ev.removeAllListeners('connection.update');
+        try {
+          await this.sock.logout().catch(() => {});
+          this.sock.end(undefined);
+        } catch (e) {
+          // ignore socket ending error
+        }
       }
     } catch (e) {
       console.warn('Socket logout error:', e);
     }
+    this.sock = null;
     this.clearSession();
     this.status = 'disconnected';
     this.qr = null;
     this.phoneNumber = null;
     
-    // Restart socket to allow scanned fresh setup session
-    setTimeout(() => this.init(), 1000);
+    // Restart socket to allow scanned fresh setup session after a brief delay
+    setTimeout(() => {
+      console.log('🔄 Spawning a brand-new WhatsApp socket connection...');
+      this.init();
+    }, 1500);
   }
 
   private clearSession() {

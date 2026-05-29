@@ -3,7 +3,7 @@ import { useAppState } from '../context/AppContext';
 import { MessageSquareText } from 'lucide-react';
 
 export const WhatsAppButton: React.FC = () => {
-  const { navigation } = useAppState();
+  const { navigation, supportPhone } = useAppState();
 
   const currentScreen = navigation.currentScreen;
 
@@ -17,7 +17,7 @@ export const WhatsAppButton: React.FC = () => {
     const presetText = encodeURIComponent(
       'Hello VELORA dropshipping reseller support! I am looking for details about the latest trending inventory.'
     );
-    window.open(`https://wa.me/919690986010?text=${presetText}`, '_blank');
+    window.open(`https://wa.me/${supportPhone.replace(/\D/g, '')}?text=${presetText}`, '_blank');
   };
 
   return (

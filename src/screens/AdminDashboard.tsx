@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAppState } from '../context/AppContext';
 import { Product, Order, PromoBanner, Coupon } from '../types';
 import { CATEGORIES } from '../data/mockData';
-import { BarChart3, Package, Truck, LayoutGrid, Plus, Edit3, Trash2, X, Search, Check, Save, Smartphone, Laptop, Tablet, TrendingUp, Sparkles, UserCheck, Megaphone, Percent, Tag, FileImage, Upload } from 'lucide-react';
+import { BarChart3, Package, Truck, LayoutGrid, Plus, Edit3, Trash2, X, Search, Check, Save, Smartphone, Laptop, Tablet, TrendingUp, Sparkles, UserCheck, Megaphone, Percent, Tag, FileImage, Upload, Instagram, Youtube, Mail, HelpCircle } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
   const { 
@@ -22,7 +22,12 @@ export const AdminDashboard: React.FC = () => {
     navigateTo,
     logo,
     updateLogo,
-    showToast
+    showToast,
+    supportInstagram,
+    supportYoutube,
+    supportEmail,
+    supportPhone,
+    updateSupportLinks
   } = useAppState();
 
   // Internal tab choice
@@ -36,6 +41,19 @@ export const AdminDashboard: React.FC = () => {
     return localStorage.getItem('velora_admin_whatsapp_number') || '919690986010';
   });
   const [testMode, setTestMode] = useState(false);
+
+  // Editable customer support links state
+  const [waSupportInsta, setWaSupportInsta] = useState(supportInstagram);
+  const [waSupportYt, setWaSupportYt] = useState(supportYoutube);
+  const [waSupportEmail, setWaSupportEmail] = useState(supportEmail);
+  const [waSupportPhone, setWaSupportPhone] = useState(supportPhone);
+
+  React.useEffect(() => {
+    setWaSupportInsta(supportInstagram);
+    setWaSupportYt(supportYoutube);
+    setWaSupportEmail(supportEmail);
+    setWaSupportPhone(supportPhone);
+  }, [supportInstagram, supportYoutube, supportEmail, supportPhone]);
 
   // Fetch current WhatsApp daemon status from Express backend
   const fetchWaStatus = async () => {
@@ -150,6 +168,7 @@ export const AdminDashboard: React.FC = () => {
   const [formStock, setFormStock] = useState('10');
   const [formDesc, setFormDesc] = useState('');
   const [formSizes, setFormSizes] = useState<string[]>(['S', 'M', 'L']);
+  const [formSupplierLink, setFormSupplierLink] = useState('');
 
   // Analytics helper datasets
   const mockTotalUsersCount = 1420;
@@ -167,6 +186,7 @@ export const AdminDashboard: React.FC = () => {
     setFormStock('20');
     setFormDesc('Velriva dropship collection spec file.');
     setFormSizes(['S', 'M', 'L']);
+    setFormSupplierLink('');
     setShowItemModal(true);
   };
 
@@ -182,6 +202,7 @@ export const AdminDashboard: React.FC = () => {
     setFormStock(String(prod.stock));
     setFormDesc(prod.description);
     setFormSizes(prod.sizes || []);
+    setFormSupplierLink(prod.supplierLink || '');
     setShowItemModal(true);
   };
 
@@ -211,6 +232,7 @@ export const AdminDashboard: React.FC = () => {
       ordersCount: editingItem ? editingItem.ordersCount : 0,
       sizes: formSizes,
       reviews: editingItem ? editingItem.reviews : [],
+      supplierLink: formSupplierLink.trim() || undefined,
     };
 
     if (editingItem) {
@@ -675,9 +697,23 @@ export const AdminDashboard: React.FC = () => {
                     {order.items.map((it, i) => (
                       <div key={i} className="flex gap-2.5 items-center text-xs font-medium text-slate-800">
                         <img src={it.product.image} className="h-9 w-7 rounded-md object-cover" />
-                        <div className="overflow-hidden flex-1 leading-normal select-none">
+                        <div className="overflow-hidden flex-1 leading-normal select-none flex flex-col">
                           <p className="truncate text-slate-800 font-bold">{it.product.name}</p>
-                          <span className="text-[10px] text-slate-400 font-bold">Qty: {it.quantity} | Col: {it.selectedColor || 'N/A'}</span>
+                          <span className="text-[10px] text-slate-400 font-bold">
+                            Qty: {it.quantity} | Col: {it.selectedColor || 'N/A'}
+                            {it.selectedSize ? ` | Size: ${it.selectedSize}` : ''}
+                          </span>
+                          {it.product.supplierLink && (
+                            <a
+                              href={it.product.supplierLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1 mt-1 text-[9.5px] text-emerald-600 bg-emerald-50 hover:bg-emerald-150 border border-emerald-100 px-2 py-0.5 rounded-lg font-black transition active:scale-95 cursor-pointer w-fit"
+                            >
+                              <span>🔗 Supplier Link</span>
+                            </a>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -863,6 +899,110 @@ ALTER TABLE app_settings DISABLE ROW LEVEL SECURITY;`;
                 <span>Once the table is created, logos will instantly sync & save to Supabase permanently.</span>
               </div>
             </div>
+          </div>
+
+          {/* Section 0.5: Customer Support & Social Networks Link Customizer */}
+          <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm space-y-4 animate-fadeIn">
+            <div className="flex items-center gap-2 border-b border-slate-50 pb-3">
+              <HelpCircle className="h-4.5 w-4.5 text-emerald-500" />
+              <div>
+                <h3 className="text-xs font-black uppercase text-slate-900">Customer Support &amp; Social Links</h3>
+                <p className="text-[10px] text-slate-400 font-medium">Customize support telephone number and social support URLs across all screens</p>
+              </div>
+            </div>
+
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                updateSupportLinks({
+                  supportInstagram: waSupportInsta.trim(),
+                  supportYoutube: waSupportYt.trim(),
+                  supportEmail: waSupportEmail.trim(),
+                  supportPhone: waSupportPhone.replace(/\D/g, '').trim()
+                });
+              }}
+              className="space-y-4"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Instagram URL */}
+                <div className="space-y-1.5">
+                  <label className="text-[9.5px] font-black uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                    <Instagram className="h-3 w-3 text-pink-500" />
+                    <span>Instagram Support Link</span>
+                  </label>
+                  <input
+                    type="url"
+                    value={waSupportInsta}
+                    onChange={(e) => setWaSupportInsta(e.target.value)}
+                    placeholder="https://instagram.com/your_username"
+                    required
+                    className="w-full text-[11px] font-medium bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-slate-400 rounded-xl px-3.5 py-2.5 transition outline-none"
+                  />
+                  <p className="text-[8.5px] text-slate-400">Resellers will be redirected to this Instagram profile.</p>
+                </div>
+
+                {/* YouTube URL */}
+                <div className="space-y-1.5">
+                  <label className="text-[9.5px] font-black uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                    <Youtube className="h-3 w-3 text-red-500" />
+                    <span>YouTube Resource Channel LINK</span>
+                  </label>
+                  <input
+                    type="url"
+                    value={waSupportYt}
+                    onChange={(e) => setWaSupportYt(e.target.value)}
+                    placeholder="https://youtube.com/@channel_name"
+                    required
+                    className="w-full text-[11px] font-medium bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-slate-400 rounded-xl px-3.5 py-2.5 transition outline-none"
+                  />
+                  <p className="text-[8.5px] text-slate-400">Used for sharing educational training playlists with resellers.</p>
+                </div>
+
+                {/* Email Address */}
+                <div className="space-y-1.5">
+                  <label className="text-[9.5px] font-black uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                    <Mail className="h-3 w-3 text-indigo-500" />
+                    <span>Customer Support Email</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={waSupportEmail}
+                    onChange={(e) => setWaSupportEmail(e.target.value)}
+                    placeholder="support@example.com"
+                    required
+                    className="w-full text-[11px] font-medium bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-slate-400 rounded-xl px-3.5 py-2.5 transition outline-none"
+                  />
+                  <p className="text-[8.5px] text-slate-400">Allows direct support email feedback from within profiles.</p>
+                </div>
+
+                {/* WhatsApp Phone Number */}
+                <div className="space-y-1.5">
+                  <label className="text-[9.5px] font-black uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                    <Smartphone className="h-3 w-3 text-emerald-500" />
+                    <span>WhatsApp Helpline Number</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={waSupportPhone}
+                    onChange={(e) => setWaSupportPhone(e.target.value)}
+                    placeholder="919XXXXXXXXX"
+                    required
+                    className="w-full text-[11px] font-medium bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-slate-400 rounded-xl px-3.5 py-2.5 transition outline-none"
+                  />
+                  <p className="text-[8.5px] text-slate-400">Central WhatsApp helpline phone (include country code, numbers only, e.g. 919690986010).</p>
+                </div>
+              </div>
+
+              <div className="flex pt-3 border-t border-slate-50">
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-900 text-white font-black text-[10px] uppercase tracking-wider transition active:scale-95 shadow-md flex items-center gap-2 cursor-pointer ml-auto"
+                >
+                  <Save className="h-3.5 w-3.5" />
+                  <span>Save Social &amp; Support Links</span>
+                </button>
+              </div>
+            </form>
           </div>
           
           {/* Section 1: Promo Banners Management */}
@@ -1271,6 +1411,22 @@ ALTER TABLE app_settings DISABLE ROW LEVEL SECURITY;`;
                   className="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs font-bold text-slate-800 placeholder-slate-400 focus:outline-hidden"
                 />
               </div>
+
+              {/* Private Sourcing / Supplier link for admin eyes only */}
+              <div>
+                <label className="text-[10px] font-black uppercase text-emerald-600 mb-1 block flex items-center gap-1">
+                  <span>🔗</span> Supplier / Product Source Link (Admin Eyes Only)
+                </label>
+                <input
+                  id="form-item-supplier-link"
+                  type="url"
+                  value={formSupplierLink}
+                  onChange={(e) => setFormSupplierLink(e.target.value)}
+                  placeholder="https://example-supplier.com/product/12345"
+                  className="w-full rounded-xl border border-emerald-200 bg-emerald-50/10 focus:bg-white px-3.5 py-2.5 text-xs font-bold text-slate-800 placeholder-slate-400 focus:outline-hidden transition focus:border-emerald-500"
+                />
+                <p className="text-[8px] text-emerald-600 font-medium mt-1">This link is strictly private and hidden from normal customers and non-admin visitors.</p>
+              </div>
             </div>
 
             <button
@@ -1487,13 +1643,13 @@ ALTER TABLE app_settings DISABLE ROW LEVEL SECURITY;`;
                   </button>
                 )}
 
-                {(waStatus === 'connected' || waStatus === 'qrcode') && (
+                {(waStatus === 'connected' || waStatus === 'qrcode' || waStatus === 'connecting' || waStatus === 'loading') && (
                   <button
                     type="button"
                     onClick={handleWaLogout}
-                    className="w-full py-2.5 text-[10.5px] font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 active:scale-95 transition"
+                    className="w-full py-2.5 text-[10.5px] font-bold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 active:scale-95 transition cursor-pointer"
                   >
-                    Disconnect Session
+                    Disconnect & Reset Session
                   </button>
                 )}
                 
@@ -1501,7 +1657,7 @@ ALTER TABLE app_settings DISABLE ROW LEVEL SECURITY;`;
                   <button
                     type="button"
                     onClick={fetchWaStatus}
-                    className="w-full py-2.5 text-[10.5px] font-black rounded-xl bg-slate-950 hover:bg-slate-900 text-white active:scale-95 transition"
+                    className="w-full py-2.5 text-[10.5px] font-black rounded-xl bg-slate-950 hover:bg-slate-900 text-white active:scale-95 transition cursor-pointer"
                   >
                     Fetch QR Pairing Code
                   </button>
@@ -1544,8 +1700,8 @@ ALTER TABLE app_settings DISABLE ROW LEVEL SECURITY;`;
                   <div className="h-10 w-10 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
                   <div>
                     <span className="text-[10px] font-black text-slate-500 block">Waiting for background service</span>
-                    <p className="text-[9px] text-slate-400 mt-1 max-w-[150px] leading-relaxed">
-                      Establishing connection with WhatsApp Web socket...
+                    <p className="text-[9px] text-slate-450 text-slate-400 mt-2 max-w-[220px] leading-relaxed mx-auto font-medium">
+                      Establishing connection with WhatsApp Web socket... If the QR code does not load, please click <strong className="text-rose-600">Disconnect & Reset Session</strong> to force-clear stale cache folders.
                     </p>
                   </div>
                 </div>
