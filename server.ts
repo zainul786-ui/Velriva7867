@@ -7,6 +7,20 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  // CORS Middleware to allow remote requests (e.g. from Netlify) to the AI Studio backend
+  app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    
+    // Instantly respond successfully to browser pre-flight OPTIONS check
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200);
+    }
+    next();
+  });
+
   // JSON and URL-encoded body parsers for Express API routing
   app.use(express.json({ limit: '5mb' }));
   app.use(express.urlencoded({ extended: true, limit: '5mb' }));
