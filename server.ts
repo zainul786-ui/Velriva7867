@@ -1,7 +1,11 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { whatsappService } from './server/whatsapp';
+import { supabaseWatcher } from './server/supabaseWatcher';
 
 async function startServer() {
   const app = express();
@@ -25,9 +29,16 @@ async function startServer() {
   app.use(express.json({ limit: '5mb' }));
   app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 
-  // Initialize WhatsApp client in the background on boot
+  // Initialize WhatsApp client in the background on boot (do not block server listen)
   console.log('🔌 Launching background WhatsApp service daemon...');
-  await whatsappService.init();
+  whatsappService.init().catch(err => {
+    console.error('Failed to initialize WhatsApp service at boot:', err);
+  });
+
+  // Start background order watcher to scan Supabase orders dynamically
+  supabaseWatcher.start().catch(err => {
+    console.error('Failed to startup Supabase order watching daemon:', err);
+  });
 
   // API Route: Get WhatsApp connection status and pairing QR code
   app.get('/api/whatsapp/status', (req, res) => {
