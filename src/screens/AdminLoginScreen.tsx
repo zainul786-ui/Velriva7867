@@ -26,8 +26,8 @@ export const AdminLoginScreen: React.FC = () => {
 
   // Quick helper to fill in simulation keys instantly for the user review!
   const handleAutofillSimulatorCredentials = () => {
-    setUsername('velora068@gmail.com');
-    setPassword('velora@786');
+    setUsername('velriva7867@gmail.com');
+    setPassword('velriva@786');
     setErrorMsg('');
   };
 
@@ -47,11 +47,7 @@ export const AdminLoginScreen: React.FC = () => {
         {/* Screen Header Banner */}
         <div className="text-center mt-3 border-b border-slate-100 pb-2">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-slate-950 font-black text-amber-400 text-lg shadow-md overflow-hidden p-0">
-            {logo ? (
-              <img src={logo} className="h-full w-full object-cover" referrerPolicy="no-referrer" alt="Velora Logo" />
-            ) : (
-              <span>VL</span>
-            )}
+            <img src={logo || '/icon.svg'} className="h-full w-full object-cover animate-fadeIn" referrerPolicy="no-referrer" alt="Velriva Logo" />
           </div>
           <h2 className="text-xl font-black text-slate-900 mt-4 tracking-tight">Staff Entrance Portal</h2>
           <p className="text-xs text-slate-400 max-w-[215px] mx-auto mt-1">
@@ -69,8 +65,8 @@ export const AdminLoginScreen: React.FC = () => {
             To view the full inventory CRUD, orders and graphs, use these credentials or tap the autofill simulator helper button below.
           </p>
           <div className="flex flex-col gap-1.5 bg-white border border-amber-100 rounded-xl px-3 py-2 text-[10.5px] font-mono leading-none font-bold text-slate-700">
-            <div>Email: <strong className="text-slate-950">velora068@gmail.com</strong></div>
-            <div>Password: <strong className="text-slate-950">velora@786</strong></div>
+            <div>Email: <strong className="text-slate-950">velriva7867@gmail.com</strong></div>
+            <div>Password: <strong className="text-slate-950">velriva@786</strong></div>
           </div>
 
           <button
@@ -131,7 +127,7 @@ export const AdminLoginScreen: React.FC = () => {
 
       {/* Corporate Compliance Note */}
       <div className="text-center text-[9.5px] font-bold text-slate-400 uppercase tracking-widest mt-6">
-        VELORA GLOBAL LTD. SECURE INGRESS SYSTEMS
+        VELRIVA GLOBAL LTD. SECURE INGRESS SYSTEMS
       </div>
     </div>
   );

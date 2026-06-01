@@ -30,11 +30,11 @@ export const Header: React.FC = () => {
       case 'settings':
         return 'App Settings';
       case 'login':
-        return 'Welcome to VELORA';
+        return 'Welcome to VELRIVA';
       case 'adminLogin':
         return 'Staff Portal';
       default:
-        return 'VELORA';
+        return 'VELRIVA';
     }
   };
 
@@ -62,11 +62,7 @@ export const Header: React.FC = () => {
               className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-950 font-bold text-amber-400 text-xs shadow-md transition hover:scale-105 active:scale-95 cursor-pointer overflow-hidden p-0"
               title="UserProfile Hub"
             >
-              {logo ? (
-                <img src={logo} className="h-full w-full object-cover" referrerPolicy="no-referrer" alt="Velora Logo" />
-              ) : (
-                <span>VL</span>
-              )}
+              <img src={logo || '/icon.svg'} className="h-full w-full object-cover" referrerPolicy="no-referrer" alt="Velriva Logo" />
             </button>
           )}
 

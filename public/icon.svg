@@ -71,11 +71,11 @@
     </textPath>
   </text>
 
-  <!-- 5. Embossed VELORA Text along bottom path -->
+  <!-- 5. Embossed VELRIVA Text along bottom path -->
   <!-- We want it to curve nicely on the bottom of the coin -->
   <text font-family="'Inter', 'Space Grotesk', system-ui, sans-serif" font-weight="900" font-size="34" letter-spacing="9" fill="url(#goldGrad)">
     <textPath href="#textPathBottom" startOffset="50%" text-anchor="middle">
-      VELORA
+      VELRIVA
     </textPath>
   </text>
 

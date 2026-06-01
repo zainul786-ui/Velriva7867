@@ -368,7 +368,7 @@ export const CheckoutScreen: React.FC = () => {
         {/* Security Seals */}
         <div className="pt-2 flex items-center gap-2 text-[10px] font-bold text-slate-500">
           <ShieldCheck className="h-4 w-4 text-emerald-500" />
-          <span>VELORA Buyer Protection policy enforced</span>
+          <span>VELRIVA Buyer Protection policy enforced</span>
         </div>
 
         {/* Checkout Place Order action Button */}

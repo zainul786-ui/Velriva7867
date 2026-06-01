@@ -38,7 +38,7 @@ export const AdminDashboard: React.FC = () => {
   const [waQr, setWaQr] = useState<string | null>(null);
   const [waPhoneNumber, setWaPhoneNumber] = useState<string | null>(null);
   const [waAdminPhone, setWaAdminPhone] = useState(() => {
-    return localStorage.getItem('velora_admin_whatsapp_number') || '919690986010';
+    return localStorage.getItem('velriva_admin_whatsapp_number') || '919690986010';
   });
   const [testMode, setTestMode] = useState(false);
 
@@ -88,7 +88,7 @@ export const AdminDashboard: React.FC = () => {
   }, [activeTab]);
 
   const handleSavePhone = () => {
-    localStorage.setItem('velora_admin_whatsapp_number', waAdminPhone.replace(/\D/g, ''));
+    localStorage.setItem('velriva_admin_whatsapp_number', waAdminPhone.replace(/\D/g, ''));
     showToast('Admin notification receiver phone number saved!', 'success');
   };
 
@@ -757,18 +757,14 @@ export const AdminDashboard: React.FC = () => {
               <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
                 <span className="text-[8px] font-black uppercase tracking-widest text-[#94a3b8] mb-0.5">Current Logo</span>
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-950 font-black text-amber-100 text-xl shadow-md overflow-hidden p-0 border border-slate-200">
-                  {logo ? (
-                    <img src={logo} className="h-full w-full object-cover" referrerPolicy="no-referrer" alt="Velora logo" />
-                  ) : (
-                    <span className="text-amber-400">VL</span>
-                  )}
+                  <img src={logo || '/icon.svg'} className="h-full w-full object-cover" referrerPolicy="no-referrer" alt="Velriva logo" />
                 </div>
               </div>
 
               {/* Upload Controls */}
               <div className="flex-1 space-y-2 w-full text-center sm:text-left">
                 <p className="text-[10.5px] text-slate-500 font-medium leading-relaxed">
-                  Upload an image (PNG, JPG, or SVG) to replace the default <strong className="text-slate-800">VL</strong> monogram logo on all active user screens instantly.
+                  Upload an image (PNG, JPG, or SVG) to replace the default <strong className="text-slate-800">VELRIVA</strong> gold-blue monogram logo on all active user screens instantly.
                 </p>
 
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
@@ -1159,7 +1155,7 @@ ALTER TABLE app_settings DISABLE ROW LEVEL SECURITY;`;
                   <label className="text-[9px] font-black uppercase text-slate-400 mb-0.5 block">Voucher Code</label>
                   <input
                     type="text"
-                    placeholder="E.g. VELORA786"
+                    placeholder="E.g. VELRIVA786"
                     value={newCouponCode}
                     onChange={(e) => setNewCouponCode(e.target.value.toUpperCase())}
                     className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-800"

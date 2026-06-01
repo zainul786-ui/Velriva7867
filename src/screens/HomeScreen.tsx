@@ -178,7 +178,7 @@ export const HomeScreen: React.FC = () => {
             <ShieldCheck className="h-5 w-5 text-white" />
           </div>
           <div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-[#059669]">VELORA Dropship Trust</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-[#059669]">VELRIVA Dropship Trust</span>
             <h4 className="text-xs font-bold text-slate-900 mt-0.5">100% Cash On Delivery Available</h4>
             <p className="text-[10.5px] text-slate-500 mt-1 leading-relaxed">
               Verify your package at your doorstep before payment. Zero card or cash deposits required to fulfill orders.
@@ -321,7 +321,7 @@ export const HomeScreen: React.FC = () => {
           <div className="h-1.5 w-1.5 rounded-full bg-[#10b981] animate-ping" />
           <h3 className="text-[11px] font-black uppercase tracking-wider text-slate-400">Connect &amp; Support Hub</h3>
         </div>
-        <h4 className="text-sm font-black text-slate-900">VELORA Reseller Socials</h4>
+        <h4 className="text-sm font-black text-slate-900">VELRIVA Reseller Socials</h4>
         <p className="text-[10.5px] text-slate-500 mt-1 leading-relaxed">
           Connect with our central support, explore training videos, or message us directly on Instagram for quick reseller queries.
         </p>
@@ -368,7 +368,7 @@ export const HomeScreen: React.FC = () => {
         {/* Dynamic WhatsApp direct helpline pill */}
         <button
           onClick={() => {
-            const text = encodeURIComponent('Hello VELORA dropshipping support! I am looking for details about the latest trending inventory.');
+            const text = encodeURIComponent('Hello VELRIVA dropshipping support! I am looking for details about the latest trending inventory.');
             window.open(`https://wa.me/${supportPhone.replace(/\D/g, '')}?text=${text}`, '_blank');
           }}
           className="w-full mt-3 py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[11px] tracking-wide uppercase transition active:scale-[0.98] cursor-pointer shadow-xs flex items-center justify-center gap-2"

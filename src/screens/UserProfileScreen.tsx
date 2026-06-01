@@ -46,14 +46,14 @@ export const UserProfileScreen: React.FC = () => {
       subtitle: `Instant Assistance via +${supportPhone}`,
       icon: HelpCircle,
       action: () => {
-        const text = encodeURIComponent('Hello VELORA support! I need assistance with my order/account.');
+        const text = encodeURIComponent('Hello VELRIVA support! I need assistance with my order/account.');
         window.open(`https://wa.me/${supportPhone.replace(/\D/g, '')}?text=${text}`, '_blank');
       },
     },
     {
       id: 'profile-instagram',
       title: 'Instagram Support & Store',
-      subtitle: `@${supportInstagram.split('instagram.com/')[1]?.split('?')[0] || 'velora_store'}`,
+      subtitle: `@${supportInstagram.split('instagram.com/')[1]?.split('?')[0] || 'velriva_store'}`,
       icon: Instagram,
       action: () => {
         window.open(supportInstagram, '_blank');

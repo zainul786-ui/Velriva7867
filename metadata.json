@@ -1,6 +1,6 @@
 {
-  "name": "VELORA",
-  "description": "Premium Mobile e-Commerce PWA for Velora dropshipping and reseller startup.",
+  "name": "VELRIVA",
+  "description": "Premium Mobile e-Commerce PWA for Velriva dropshipping and reseller startup.",
   "requestFramePermissions": ["geolocation"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

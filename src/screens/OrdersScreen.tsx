@@ -40,7 +40,7 @@ export const OrdersScreen: React.FC = () => {
           <div>
             <h3 className="font-extrabold text-slate-900 text-sm">No orders yet</h3>
             <p className="text-xs text-slate-400 max-w-[210px] mx-auto leading-relaxed mt-1">
-              You haven&apos;t placed any Cash on Delivery orders on this VELORA applet yet.
+              You haven&apos;t placed any Cash on Delivery orders on this VELRIVA applet yet.
             </p>
           </div>
           

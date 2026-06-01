@@ -9,7 +9,7 @@ import { supabaseWatcher } from './server/supabaseWatcher';
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
   // CORS Middleware to allow remote requests (e.g. from Netlify) to the AI Studio backend
   app.use((req, res, next) => {
@@ -100,7 +100,7 @@ async function startServer() {
     const deliveryTime = date || new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
 
     // Format highly polished text message style for the WhatsApp dispatch
-    const waTextBody = `📦 *NEW ORDER PLACED ON VELORA!*
+    const waTextBody = `📦 *NEW ORDER PLACED ON VELRIVA!*
 ━━━━━━━━━━━━━━━━━━━━━
 *Order ID:* \`${orderId}\`
 *Order Date/Time:* ${deliveryTime}
@@ -116,7 +116,7 @@ ${itemsListString}
 💰 *BILLING DETAIL*
 • *Grand Total Payable (COD):* ₹${total}
 ━━━━━━━━━━━━━━━━━━━━━
-⚙️ _Auto-delivered in background via VELORA Auto-Bot_`;
+⚙️ _Auto-delivered in background via VELRIVA Auto-Bot_`;
 
     try {
       const dispatched = await whatsappService.sendMessage(targetNumber, waTextBody);
@@ -136,6 +136,94 @@ ${itemsListString}
     }
   });
 
+  // Dynamic in-memory map to store verification OTP keys for active sessions
+  const otpStore = new Map<string, { otp: string, expires: number }>();
+
+  // API Route: Send OTP to a customer's WhatsApp number
+  app.post('/api/auth/send-otp', async (req, res) => {
+    let { phone } = req.body;
+    if (!phone) {
+      return res.status(400).json({ error: 'WhatsApp / Phone number is required' });
+    }
+
+    // Clean and normalize phone number representation
+    let cleanPhone = phone.replace(/\D/g, '');
+    if (!cleanPhone) {
+      return res.status(400).json({ error: 'Invalid phone number format' });
+    }
+
+    // Default to appending country code "91" for India if only 10 digits are specified
+    if (cleanPhone.length === 10) {
+      cleanPhone = '91' + cleanPhone;
+    }
+
+    // Generate random secure 6-digit numeric OTP code
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expires = Date.now() + 5 * 60 * 1000; // 5 minutes expiration standard
+
+    // Store in-memory matched with phone
+    otpStore.set(cleanPhone, { otp, expires });
+
+    const messageText = `🔐 *VELRIVA Security Code:*
+Your secure reseller login validation code is *${otp}*.
+
+This code is valid for 5 minutes. Do not share this OTP with anyone for account security.
+
+_Powered by VELRIVA Automated Verification Portal_`;
+
+    try {
+      const dispatched = await whatsappService.sendMessage(cleanPhone, messageText);
+      if (dispatched) {
+        console.log(`[OTP-GEN] Successfully dispatched OTP *${otp}* to ${cleanPhone}`);
+        res.json({ success: true, message: 'OTP sent successfully!' });
+      } else {
+        // Fallback: If WhatsApp session is disconnected in development, return code or log clearly
+        console.warn(`[OTP-FALLBACK] WhatsApp service not connected. Generated OTP: *${otp}* for user phone ${cleanPhone}`);
+        res.status(200).json({ 
+          success: true, 
+          offlineFallback: true, 
+          message: 'WhatsApp daemon is disconnected. QR Setup is required.',
+          devOtp: otp 
+        });
+      }
+    } catch (err: any) {
+      console.error('Failed to send WhatsApp verification OTP:', err);
+      res.status(500).json({ error: 'Failed to send OTP code to WhatsApp', message: err.message });
+    }
+  });
+
+  // API Route: Verify OTP and proceed with access validation
+  app.post('/api/auth/verify-otp', async (req, res) => {
+    let { phone, otp } = req.body;
+    if (!phone || !otp) {
+      return res.status(400).json({ error: 'Phone and verification OTP are required' });
+    }
+
+    let cleanPhone = phone.replace(/\D/g, '');
+    if (cleanPhone.length === 10) {
+      cleanPhone = '91' + cleanPhone;
+    }
+
+    const record = otpStore.get(cleanPhone);
+    if (!record) {
+      return res.status(400).json({ error: 'No verification code requested for this phone number' });
+    }
+
+    if (Date.now() > record.expires) {
+      otpStore.delete(cleanPhone);
+      return res.status(400).json({ error: 'The verification code has expired. Please try again.' });
+    }
+
+    if (record.otp !== otp.trim()) {
+      return res.status(400).json({ error: 'Incorrect verification code. Please check and try again.' });
+    }
+
+    // Clean validated record
+    otpStore.delete(cleanPhone);
+
+    res.json({ success: true, message: 'OTP verified successfully' });
+  });
+
   // Mount Vite developer middleware for rendering React SPA path in development mode
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
@@ -153,7 +241,7 @@ ${itemsListString}
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 VELORA full-stack application running on port ${PORT}`);
+    console.log(`🚀 VELRIVA full-stack application running on port ${PORT}`);
   });
 }
 

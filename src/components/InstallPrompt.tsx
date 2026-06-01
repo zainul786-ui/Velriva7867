@@ -16,7 +16,7 @@ export const InstallPrompt: React.FC = () => {
 
   const handleInstall = () => {
     setIsVisible(false);
-    alert('Thank you! To install VELORA: Tap the browser share/menu button and select "Add to Home Screen" to launch as an app with lightning-fast direct access!');
+    alert('Thank you! To install VELRIVA: Tap the browser share/menu button and select "Add to Home Screen" to launch as an app with lightning-fast direct access!');
   };
 
   const handleDismiss = () => {
@@ -39,7 +39,7 @@ export const InstallPrompt: React.FC = () => {
                 VR
               </div>
               <div>
-                <h4 className="text-xs font-black tracking-wide text-amber-400">VELORA INSTANT</h4>
+                <h4 className="text-xs font-black tracking-wide text-amber-400">VELRIVA INSTANT</h4>
                 <p className="text-[11px] font-medium text-slate-300 leading-relaxed max-w-[190px]">
                   Install our lightweight app to get instant delivery monitoring & offline orders.
                 </p>

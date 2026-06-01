@@ -94,7 +94,7 @@ export const TrackOrderScreen: React.FC = () => {
               
               <div className="text-right">
                 <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 block leading-none">Courier Partner</span>
-                <span className="font-bold text-slate-800 mt-1 block">VELORA-EXPRESS</span>
+                <span className="font-bold text-slate-800 mt-1 block">VELRIVA-EXPRESS</span>
               </div>
             </div>
 

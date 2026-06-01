@@ -52,6 +52,8 @@ interface AppContextType {
   currentUser: User;
   loginUser: (email: string, password: string) => Promise<boolean | string>;
   registerUser: (name: string, email: string, password: string, phone: string) => Promise<boolean | string>;
+  sendLoginOtp: (phone: string) => Promise<{ success: boolean; offlineFallback?: boolean; devOtp?: string; error?: string }>;
+  verifyLoginOtp: (phone: string, otp: string) => Promise<{ success: boolean; user?: User; error?: string }>;
   logoutUser: () => void;
   updateUserProfile: (name: string, phone: string) => Promise<boolean>;
   isAdmin: boolean;
@@ -155,12 +157,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // 10. Website dynamic custom logo state viewable across app with gold SVG fallback
   const [logo, setLogo] = useState<string>(() => {
-    return localStorage.getItem('velora_logo') || '';
+    return localStorage.getItem('velriva_logo') || '';
   });
 
   const updateLogo = async (base64OrUrl: string) => {
     setLogo(base64OrUrl);
-    localStorage.setItem('velora_logo', base64OrUrl);
+    localStorage.setItem('velriva_logo', base64OrUrl);
     
     if (isSupabaseConfigured && supabase) {
       try {
@@ -185,16 +187,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Configurable Support Channels
   const [supportInstagram, setSupportInstagram] = useState<string>(() => {
-    return localStorage.getItem('velora_support_instagram') || 'https://www.instagram.com/velora_store.786?igsh=MWJlbzVjOG96aWFzMg==';
+    return localStorage.getItem('velriva_support_instagram') || 'https://www.instagram.com/velriva_store.786?igsh=MWJlbzVjOG96aWFzMg==';
   });
   const [supportYoutube, setSupportYoutube] = useState<string>(() => {
-    return localStorage.getItem('velora_support_youtube') || 'https://youtube.com/@velriva?si=je8rcw_kLp1s7BdE';
+    return localStorage.getItem('velriva_support_youtube') || 'https://youtube.com/@velriva?si=je8rcw_kLp1s7BdE';
   });
   const [supportEmail, setSupportEmail] = useState<string>(() => {
-    return localStorage.getItem('velora_support_email') || 'velora068@gmail.com';
+    return localStorage.getItem('velriva_support_email') || 'velriva7867@gmail.com';
   });
   const [supportPhone, setSupportPhone] = useState<string>(() => {
-    return localStorage.getItem('velora_admin_whatsapp_number') || '919690986010';
+    return localStorage.getItem('velriva_admin_whatsapp_number') || '919690986010';
   });
 
   const updateSupportLinks = (links: { supportInstagram: string; supportYoutube: string; supportEmail: string; supportPhone: string }) => {
@@ -203,10 +205,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSupportEmail(links.supportEmail);
     setSupportPhone(links.supportPhone);
 
-    localStorage.setItem('velora_support_instagram', links.supportInstagram);
-    localStorage.setItem('velora_support_youtube', links.supportYoutube);
-    localStorage.setItem('velora_support_email', links.supportEmail);
-    localStorage.setItem('velora_admin_whatsapp_number', links.supportPhone);
+    localStorage.setItem('velriva_support_instagram', links.supportInstagram);
+    localStorage.setItem('velriva_support_youtube', links.supportYoutube);
+    localStorage.setItem('velriva_support_email', links.supportEmail);
+    localStorage.setItem('velriva_admin_whatsapp_number', links.supportPhone);
 
     showToast('Customer Support channels updated successfully!', 'success');
   };
@@ -426,7 +428,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
           if (!logoErr && logoSetting && logoSetting.value) {
             setLogo(logoSetting.value);
-            localStorage.setItem('velora_logo', logoSetting.value);
+            localStorage.setItem('velriva_logo', logoSetting.value);
           }
         } catch (logoCatch) {
           console.warn("Logo load from app_settings failed. Schema might not exist yet.", logoCatch);
@@ -870,7 +872,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       items: newOrder.items,
       total: newOrder.total,
       date: newOrder.date,
-      adminPhone: localStorage.getItem('velora_admin_whatsapp_number') || ''
+      adminPhone: localStorage.getItem('velriva_admin_whatsapp_number') || ''
     };
 
     let apiTargetUrl = '/api/whatsapp/send';
@@ -1221,6 +1223,165 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('Logged out of user account', 'info');
   };
 
+  const sendLoginOtp = async (phone: string): Promise<{ success: boolean; offlineFallback?: boolean; devOtp?: string; error?: string }> => {
+    try {
+      const trimmedPhone = phone.trim();
+      if (!trimmedPhone) {
+        return { success: false, error: 'Phone number is required' };
+      }
+
+      const response = await fetch('/api/auth/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: trimmedPhone })
+      });
+
+      const resData = await response.json();
+      if (response.ok && resData.success) {
+        return { 
+          success: true, 
+          offlineFallback: resData.offlineFallback, 
+          devOtp: resData.devOtp 
+        };
+      } else {
+        return { success: false, error: resData.error || resData.message || 'Failed to send OTP' };
+      }
+    } catch (e: any) {
+      console.error('sendLoginOtp connection exception:', e);
+      return { success: false, error: `Connection failed: ${e.message || e}` };
+    }
+  };
+
+  const verifyLoginOtp = async (phone: string, otp: string): Promise<{ success: boolean; user?: User; error?: string }> => {
+    try {
+      const trimmedPhone = phone.trim();
+      const trimmedOtp = otp.trim();
+
+      if (!trimmedPhone || !trimmedOtp) {
+        return { success: false, error: 'Phone and OTP are required' };
+      }
+
+      const response = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: trimmedPhone, otp: trimmedOtp })
+      });
+
+      const resData = await response.json();
+      if (!response.ok || !resData.success) {
+        return { success: false, error: resData.error || resData.message || 'Verification failed' };
+      }
+
+      // OTP verified successfully!
+      // Now, try to load profile from Supabase with search query by phone
+      let cleanPhone = trimmedPhone.replace(/\D/g, '');
+      if (cleanPhone.length === 10) {
+        cleanPhone = '91' + cleanPhone;
+      }
+
+      let matchedAccount: any = null;
+
+      if (isSupabaseConfigured && supabase) {
+        const { data: dbAccount, error: getErr } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('phone', cleanPhone);
+
+        if (!getErr && dbAccount && dbAccount.length > 0) {
+          matchedAccount = dbAccount[0];
+        } else {
+          // Fallback: search by original format
+          const { data: dbAccountAlt } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('phone', trimmedPhone);
+
+          if (dbAccountAlt && dbAccountAlt.length > 0) {
+            matchedAccount = dbAccountAlt[0];
+          } else {
+            // ALT fallback: match by last 10 digits
+            const raw10Digits = cleanPhone.substring(cleanPhone.length - 10);
+            if (raw10Digits.length === 10) {
+              const { data: dbAccountAlt2 } = await supabase
+                .from('profiles')
+                .select('*')
+                .like('phone', `%${raw10Digits}`);
+              if (dbAccountAlt2 && dbAccountAlt2.length > 0) {
+                matchedAccount = dbAccountAlt2[0];
+              }
+            }
+          }
+        }
+      }
+
+      // If offline or profile was not in database yet, look in offline accounts cache
+      if (!matchedAccount) {
+        const storedAccounts = localStorage.getItem('velriva_accounts');
+        const dbAccounts = storedAccounts ? JSON.parse(storedAccounts) : [];
+        matchedAccount = dbAccounts.find((acc: any) => {
+          const accPhone = (acc.phone || '').replace(/\D/g, '');
+          const searchPhone = cleanPhone;
+          return accPhone.endsWith(searchPhone.substring(searchPhone.length - 10));
+        });
+      }
+
+      if (!matchedAccount) {
+         return { success: false, error: 'reseller_not_found' }; // UI redirect/warning identifier
+      }
+
+      // Successfully found profile! Let's build User object
+      const user: User = {
+        id: matchedAccount.id,
+        name: matchedAccount.name,
+        email: matchedAccount.email,
+        phone: matchedAccount.phone || trimmedPhone,
+        isLoggedIn: true
+      };
+
+      setCurrentUser(user);
+      localStorage.setItem('velriva_user', JSON.stringify(user));
+
+      // Restore orders from Supabase if active
+      let restoredOrders: Order[] = [];
+      if (isSupabaseConfigured && supabase) {
+        const { data: userOrders } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('customer_email', matchedAccount.email);
+
+        if (userOrders) {
+          restoredOrders = userOrders.map((o: any) => ({
+            id: o.id,
+            date: o.date,
+            items: o.items || [],
+            total: Number(o.total),
+            status: o.status,
+            customerEmail: o.customer_email || undefined,
+            shippingAddress: o.shipping_address || {},
+            tracking: o.tracking || []
+          }));
+        }
+      } else {
+        restoredOrders = matchedAccount.orders || [];
+      }
+
+      setOrders(restoredOrders);
+      localStorage.setItem('velriva_orders', JSON.stringify(restoredOrders));
+
+      setCart([]);
+      setWishlist([]);
+      localStorage.setItem('velriva_cart', JSON.stringify([]));
+      localStorage.setItem('velriva_wishlist', JSON.stringify([]));
+
+      showToast(`Welcome to VELRIVA, ${matchedAccount.name}!`, 'success');
+      return { success: true, user };
+
+    } catch (e: any) {
+      console.error('verifyLoginOtp error:', e);
+      return { success: false, error: `Verification failed: ${e.message || e}` };
+    }
+  };
+
   const updateUserProfile = async (name: string, phone: string): Promise<boolean> => {
     if (!currentUser.isLoggedIn || !currentUser.email) {
       showToast('You must be logged in to update your profile.', 'error');
@@ -1356,6 +1517,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         currentUser,
         loginUser,
         registerUser,
+        sendLoginOtp,
+        verifyLoginOtp,
         logoutUser,
         updateUserProfile,
         isAdmin,

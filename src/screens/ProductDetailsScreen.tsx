@@ -13,7 +13,7 @@ export const ProductDetailsScreen: React.FC = () => {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   // Generate our rich promotional dropship message format
-  const shareTitle = `✨ Velora Hot Deal: ${product ? product.name : ''}`;
+  const shareTitle = `✨ Velriva Hot Deal: ${product ? product.name : ''}`;
   const deepLink = `${window.location.protocol}//${window.location.host}/?productId=${product ? product.id : ''}`;
   const shareBody = product ? `*${product.name.toUpperCase()}* 🛍️
 ━━━━━━━━━━━━━━━━━━━
@@ -31,7 +31,7 @@ ${product.image}
 🛒 *Place Your Instant Order Here:*
 👉 ${deepLink}
 ━━━━━━━━━━━━━━━━━━━
-_Marketed by Velora Dropshipping Network_` : '';
+_Marketed by Velriva Dropshipping Network_` : '';
 
   const handleCopyShare = async () => {
     try {

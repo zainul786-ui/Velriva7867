@@ -1,7 +1,7 @@
 {
-  "name": "VELORA Premium Dropship",
-  "short_name": "VELORA",
-  "description": "Premium Mobile e-Commerce PWA for Velora dropshipping and reseller startup.",
+  "name": "VELRIVA Premium Dropship",
+  "short_name": "VELRIVA",
+  "description": "Premium Mobile e-Commerce PWA for Velriva dropshipping and reseller startup.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#020617",
