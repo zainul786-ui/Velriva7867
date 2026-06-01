@@ -27,7 +27,8 @@ export const AdminDashboard: React.FC = () => {
     supportYoutube,
     supportEmail,
     supportPhone,
-    updateSupportLinks
+    updateSupportLinks,
+    getApiUrl
   } = useAppState();
 
   // Internal tab choice
@@ -54,14 +55,6 @@ export const AdminDashboard: React.FC = () => {
     setWaSupportEmail(supportEmail);
     setWaSupportPhone(supportPhone);
   }, [supportInstagram, supportYoutube, supportEmail, supportPhone]);
-
-  // Helper to determine the backend API base url for external static deployments like Netlify
-  const getApiUrl = (endpoint: string) => {
-    if (typeof window !== 'undefined' && (window.location.hostname.includes('run.app') || window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1')) {
-      return endpoint;
-    }
-    return `https://ais-pre-htphy24awtencdv6abtodd-54386008569.asia-southeast1.run.app${endpoint}`;
-  };
 
   // Fetch current WhatsApp daemon status from Express backend
   const fetchWaStatus = async () => {

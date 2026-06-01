@@ -80,6 +80,7 @@ interface AppContextType {
   supportEmail: string;
   supportPhone: string;
   updateSupportLinks: (links: { supportInstagram: string; supportYoutube: string; supportEmail: string; supportPhone: string }) => void;
+  getApiUrl: (endpoint: string) => string;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -211,6 +212,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('velriva_admin_whatsapp_number', links.supportPhone);
 
     showToast('Customer Support channels updated successfully!', 'success');
+  };
+
+  const getApiUrl = (endpoint: string): string => {
+    const metaEnv = (import.meta as any).env || {};
+    const customBackend = metaEnv.VITE_BACKEND_URL || metaEnv.VITE_API_URL;
+    if (customBackend) {
+      const cleanBase = customBackend.endsWith('/') ? customBackend.slice(0, -1) : customBackend;
+      const cleanEndpoint = endpoint.startsWith('/') ? endpoint : '/' + endpoint;
+      return `${cleanBase}${cleanEndpoint}`;
+    }
+
+    if (typeof window !== 'undefined' && (
+      window.location.hostname.includes('run.app') || 
+      window.location.hostname.includes('localhost') || 
+      window.location.hostname === '127.0.0.1' ||
+      window.location.hostname.includes('gitpod.io')
+    )) {
+      return endpoint;
+    }
+
+    return `https://ais-pre-htphy24awtencdv6abtodd-54386008569.asia-southeast1.run.app${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
   };
 
   // Load initial data from localStorage on Mount
@@ -875,10 +897,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       adminPhone: localStorage.getItem('velriva_admin_whatsapp_number') || ''
     };
 
-    let apiTargetUrl = '/api/whatsapp/send';
-    if (typeof window !== 'undefined' && !(window.location.hostname.includes('run.app') || window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1')) {
-      apiTargetUrl = 'https://ais-pre-htphy24awtencdv6abtodd-54386008569.asia-southeast1.run.app/api/whatsapp/send';
-    }
+    const apiTargetUrl = getApiUrl('/api/whatsapp/send');
 
     fetch(apiTargetUrl, {
       method: 'POST',
@@ -1230,7 +1249,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return { success: false, error: 'Phone number is required' };
       }
 
-      const response = await fetch('/api/auth/send-otp', {
+      const response = await fetch(getApiUrl('/api/auth/send-otp'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: trimmedPhone })
@@ -1261,7 +1280,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return { success: false, error: 'Phone and OTP are required' };
       }
 
-      const response = await fetch('/api/auth/verify-otp', {
+      const response = await fetch(getApiUrl('/api/auth/verify-otp'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: trimmedPhone, otp: trimmedOtp })
@@ -1537,6 +1556,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         supportEmail,
         supportPhone,
         updateSupportLinks,
+        getApiUrl,
       }}
     >
       {children}
