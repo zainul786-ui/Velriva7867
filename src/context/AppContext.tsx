@@ -538,8 +538,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             shippingAddress: o.shipping_address || {},
             tracking: o.tracking || []
           }));
-          setOrders(mappedOrders);
-          localStorage.setItem('velriva_orders', JSON.stringify(mappedOrders));
+
+          // Retain local orders that aren't fetched from Supabase to prevent loss of local testing data
+          const storedOrders = localStorage.getItem('velriva_orders');
+          let mergedOrders = [...mappedOrders];
+          if (storedOrders) {
+            try {
+              const localOrders: Order[] = JSON.parse(storedOrders);
+              localOrders.forEach(lo => {
+                if (!mergedOrders.some(mo => mo.id === lo.id)) {
+                  mergedOrders.push(lo);
+                }
+              });
+            } catch (e) {
+              console.warn("Could not parse local orders for merge:", e);
+            }
+          }
+
+          setOrders(mergedOrders);
+          localStorage.setItem('velriva_orders', JSON.stringify(mergedOrders));
         }
       } catch (err) {
         console.error("Failed to load/sync scoped orders:", err);
@@ -996,18 +1013,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.error("Failed to run automatic background WhatsApp notification:", err);
     });
 
-    clearCart();
-    setAppliedCoupon(null); // Clear active coupon on order complete
-    
     // Add real-time notification
     addNotification(
       'Order Placed Successfully!',
       `Order ${orderId} has been placed. We will verify your Cash on Delivery (COD) order shortly.`
     );
     
-    // Update product internal orderCounts
+    // Update product internal orderCounts using newOrder.items (pristine snapshot)
     const updatedProducts = products.map(prod => {
-      const purchased = cart.find(c => c.product.id === prod.id);
+      const purchased = newOrder.items.find(c => c.product.id === prod.id);
       if (purchased) {
         return {
           ...prod,
@@ -1021,38 +1035,66 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // Dynamic Supabase Order Synchronization (Background)
     if (isSupabaseConfigured && supabase) {
-      supabase.from('orders').insert({
+      const basePayload: any = {
         id: orderId,
         date: newOrder.date,
-        items: [...cart],
+        items: newOrder.items,
         total: finalTotal,
         status: 'Pending',
         customer_email: currentUser && currentUser.isLoggedIn ? currentUser.email : null,
         shipping_address: shippingDetails,
         tracking: newOrder.tracking,
+      };
+
+      supabase.from('orders').insert({
+        ...basePayload,
         device_info: computedDevInfo,
         location_info: geoInfo,
         client_ip: ipAddress
       }).then(({ error }) => {
         if (error) {
-          console.error("Supabase failed to record order entry:", error);
+          console.warn("First order insert attempt failed, checking fallback:", error.message || error);
+          
+          // Check if columns are missing
+          const errorStr = (error.message || '').toLowerCase();
+          const hasMissingColumnError = errorStr.includes('client_ip') || errorStr.includes('device_info') || errorStr.includes('location_info') || errorStr.includes('column') || errorStr.includes('fail');
+
+          if (hasMissingColumnError) {
+            console.log("Retrying order insertion without analytics columns...");
+            supabase.from('orders').insert(basePayload).then(({ error: retryError }) => {
+              if (retryError) {
+                console.error("Supabase failed fallback order entry:", retryError);
+                showToast(`Database Error: ${retryError.message || 'Check table requirements'}. Order is saved locally.`, 'error');
+              } else {
+                console.log("Order recorded in Supabase (fallback/legacy mode).");
+                showToast('Order saved to Cloud database (Legacy mode)!', 'success');
+              }
+            });
+          } else {
+            showToast(`Database Error: ${error.message || 'Check RLS or Table schema'}. Order is saved locally.`, 'error');
+          }
         } else {
           console.log("Order recorded dynamically in Supabase.");
+          showToast('Order saved to Cloud database!', 'success');
         }
       });
 
-      // Synchronize product stocks and order counters
+      // Synchronize product stocks and order counters in Supabase
       updatedProducts.forEach(prod => {
-        const purchased = cart.find(c => c.product.id === prod.id);
+        const purchased = newOrder.items.find(c => c.product.id === prod.id);
         if (purchased) {
           supabase.from('products').update({
             stock: prod.stock,
             orders_count: prod.ordersCount
-          }).eq('id', prod.id).then();
+          }).eq('id', prod.id).then(({ error }) => {
+            if (error) console.error("Supabase fail to update stock:", error);
+          });
         }
       });
     }
 
+    clearCart();
+    setAppliedCoupon(null); // Clear active coupon on order complete
     showToast('Your COD Order placed successfully!', 'success');
     return newOrder;
   };
@@ -1161,7 +1203,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         fetch(getApiUrl('/api/whatsapp/notify-register'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: user.name, phone: user.phone })
+          body: JSON.stringify({
+            name: user.name,
+            phone: user.phone,
+            supportInstagram,
+            supportYoutube,
+            supportEmail,
+            supportPhone
+          })
         }).catch(() => {});
 
         showToast(`Account created on Supabase! Welcome, ${name.trim()}!`, 'success');
@@ -1217,7 +1266,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     fetch(getApiUrl('/api/whatsapp/notify-register'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: user.name, phone: user.phone })
+      body: JSON.stringify({
+        name: user.name,
+        phone: user.phone,
+        supportInstagram,
+        supportYoutube,
+        supportEmail,
+        supportPhone
+      })
     }).catch(() => {});
 
     showToast(`Account created successfully! Welcome, ${newAccount.name}!`, 'success');

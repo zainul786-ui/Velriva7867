@@ -60,7 +60,7 @@ async function startServer() {
     }
   });
 
-  // API Route: Send order receipt format to custom recipient
+  // API Route: Send order receipt format to custom recipient (both admin and customer)
   app.post('/api/whatsapp/send', async (req, res) => {
     const { 
       orderId, 
@@ -73,7 +73,7 @@ async function startServer() {
       adminPhone 
     } = req.body;
 
-    // Validate request pay fields
+    // Validate request fields
     if (!orderId || !customerName || !customerPhone || !address || !items || !total) {
       return res.status(400).json({ 
         error: 'Missing required fields', 
@@ -81,58 +81,119 @@ async function startServer() {
       });
     }
 
-    // Default target: Admin specified number or self-message fallback
-    let targetNumber = adminPhone || process.env.VITE_ADMIN_WHATSAPP || '919690986010';
-    targetNumber = targetNumber.replace(/\D/g, ''); // strip all non-digits
+    // Normalized phone numbers
+    let targetAdminNumber = adminPhone || process.env.VITE_ADMIN_WHATSAPP || '919690986010';
+    targetAdminNumber = targetAdminNumber.replace(/\D/g, '');
 
-    // Build the list of ordered products
-    const itemsListString = Array.isArray(items) 
+    let cleanCustomerPhone = customerPhone.replace(/\D/g, '');
+    if (cleanCustomerPhone.length === 10) {
+      cleanCustomerPhone = '91' + cleanCustomerPhone;
+    }
+
+    const deliveryTime = date || new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+
+    // 1. ADMIN ITEMS LIST: Includes Meesho/Supplier sourcing links
+    const adminItemsList = Array.isArray(items) 
       ? items.map((it: any) => {
           const prodName = it.product?.name || 'Product';
           const qty = it.quantity || 1;
           const price = it.product?.price || 0;
           const size = it.selectedSize ? ` [Size: ${it.selectedSize}]` : '';
-          const supplier = it.product?.supplierLink ? `\n   🔗 Sourcing Link: ${it.product.supplierLink}` : '';
-          return `• ${prodName} × ${qty}${size} (₹${price * qty})${supplier}`;
+          const color = it.selectedColor ? ` [Color: ${it.selectedColor}]` : '';
+          
+          let sourcingLine = '';
+          if (it.product?.supplierLink) {
+            sourcingLine = `\n   🔗 *Sourcing Link:* ${it.product.supplierLink}\n   _(💡 Note: Yeh order humne yahan se uthaya tha. Yeh hai uska link, ise open karke fulfill or duplicate models order kar sakte ho.)_`;
+          } else {
+            sourcingLine = `\n   🔗 *Sourcing Link:* No supplier/Meesho link attached.`;
+          }
+          
+          return `• *${prodName}* × ${qty}${size}${color} (₹${price * qty})${sourcingLine}`;
+        }).join('\n\n')
+      : '• No order items attached.';
+
+    // 2. CUSTOMER ITEMS LIST: Strictly EXCLUDES sourcing links!
+    const customerItemsList = Array.isArray(items) 
+      ? items.map((it: any) => {
+          const prodName = it.product?.name || 'Product';
+          const qty = it.quantity || 1;
+          const price = it.product?.price || 0;
+          const size = it.selectedSize ? ` [Size: ${it.selectedSize}]` : '';
+          const color = it.selectedColor ? ` [Color: ${it.selectedColor}]` : '';
+          return `• *${prodName}* × ${qty}${size}${color} (₹${price * qty})`;
         }).join('\n')
       : '• No items attached.';
 
-    const deliveryTime = date || new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
-
-    // Format highly polished text message style for the WhatsApp dispatch
-    const waTextBody = `📦 *NEW ORDER PLACED ON VELRIVA!*
+    // 3. ADMIN TEXT BODY
+    const adminMsgBody = `📦 *NEW ORDER PLACED ON VELRIVA!* ⚠️
 ━━━━━━━━━━━━━━━━━━━━━
 *Order ID:* \`${orderId}\`
 *Order Date/Time:* ${deliveryTime}
 
-👤 *CUSTOMER DETAILS*
+👤 *CUSTOMER / RESELLER DETAILS*
 • *Name:* ${customerName}
-• *Phone:* ${customerPhone}
+• *Phone:* +${cleanCustomerPhone}
 • *Address:* ${address}
 
-🛒 *ORDER ITEMS*
-${itemsListString}
+🛒 *ORDER ITEMS & SOURCES:*
+${adminItemsList}
 
 💰 *BILLING DETAIL*
 • *Grand Total Payable (COD):* ₹${total}
 ━━━━━━━━━━━━━━━━━━━━━
 ⚙️ _Auto-delivered in background via VELRIVA Auto-Bot_`;
 
+    // 4. CUSTOMER TEXT BODY (Strictly confidential - zero sourcing links)
+    const customerMsgBody = `📦 *VELRIVA: ORDER CONFIRMATION* 🎉
+━━━━━━━━━━━━━━━━━━━━━
+Dear *${customerName}*, your Cash on Delivery (COD) order has been successfully booked with us! 
+
+Your order details are given below:
+
+🆔 *Order ID:* \`${orderId}\`
+📅 *Order Date:* ${deliveryTime}
+
+🛒 *ITEMS PLACED:*
+${customerItemsList}
+
+💰 *TOTAL PAYABLE (COD):* ₹${total}
+🚚 *Current Status:* Pending Dispatch Verification
+
+📍 *SHIPPING TO:*
+${address}
+
+━━━━━━━━━━━━━━━━━━━━━
+Thank you for shopping with Velriva B2B network! Let us handle the sourcing while you grow your brand! 💼✨`;
+
+    let adminDispatched = false;
+    let customerDispatched = false;
+
+    // Send to Admin
     try {
-      const dispatched = await whatsappService.sendMessage(targetNumber, waTextBody);
-      
-      if (dispatched) {
-        res.json({ success: true, message: 'WhatsApp notification dispatched in background!' });
-      } else {
-        res.status(500).json({ 
-          success: false, 
-          error: 'WhatsApp dispatch failed', 
-          message: 'Is the admin WhatsApp session authenticated using QR?' 
-        });
-      }
+      adminDispatched = await whatsappService.sendMessage(targetAdminNumber, adminMsgBody);
     } catch (err: any) {
-      console.error('WhatsApp message endpoint exception:', err);
-      res.status(500).json({ success: false, error: 'Internal dispatch error', message: err.message });
+      console.error('Failed to notify Admin of new order:', err.message || err);
+    }
+
+    // Send to Customer (Only if different from admin, or try sending anyway)
+    try {
+      customerDispatched = await whatsappService.sendMessage(cleanCustomerPhone, customerMsgBody);
+    } catch (err: any) {
+      console.error('Failed to notify Customer of new order:', err.message || err);
+    }
+
+    if (adminDispatched || customerDispatched) {
+      res.json({ 
+        success: true, 
+        message: 'Order alert notifications dispatched successfully.',
+        delivered: { admin: adminDispatched, customer: customerDispatched }
+      });
+    } else {
+      res.status(500).json({ 
+        success: false, 
+        error: 'WhatsApp dispatch failed to both parties', 
+        message: 'Ensure the WhatsApp Daemon session is authorized and paired!' 
+      });
     }
   });
 
@@ -273,7 +334,7 @@ Have a prosperous business day!`;
 
   // API Route: Send notification when a user registers (to both customer and admin)
   app.post('/api/whatsapp/notify-register', async (req, res) => {
-    let { name, phone } = req.body;
+    let { name, phone, supportInstagram, supportYoutube, supportEmail, supportPhone } = req.body;
     if (!phone) {
       return res.status(400).json({ error: 'Phone is required' });
     }
@@ -286,41 +347,78 @@ Have a prosperous business day!`;
     const userName = name || 'New Partner';
     const timestamp = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
 
-    // Customer notification
-    const customerMsg = `🎉 *WELCOME TO VELRIVA!*
-━━━━━━━━━━━━━━━━━━━━━
-Dear *${userName}*, welcome to the premium VELRIVA Dropshipping & Wholesale B2B portal!
+    const instaLink = supportInstagram || 'https://instagram.com/velriva';
+    const ytLink = supportYoutube || 'https://youtube.com/@velriva';
+    const emailContact = supportEmail || 'support@velriva.com';
+    const helplinePhone = supportPhone || '919690986010';
 
-Your registration has been verified and set up successfully.
-• *Your Username:* +${cleanPhone}
-• *Setup Date:* ${timestamp}
-
-🔑 Use your security passcode to log in any time to book orders, trace tracking numbers, and view special bulk pricing list.
+    // Detailed Customer Welcome notification containing contacts & description of what this website/business is
+    const customerMsg = `🎉 *WELCOME TO VELRIVA DROPSHIPPING!* 🚀
 ━━━━━━━━━━━━━━━━━━━━━
-_Grow your dropshipping operations with Velriva B2B network_`;
+Dear *${userName}*, welcome to India's premium *VELRIVA Dropshipping & Wholesale B2B Reselling Network*! 🌟
+
+We are excited to support and boost your home-based reselling venture! Here is a brief guide on how our platform empowers you to earn:
+
+📈 *What is Velriva?*
+Velriva is a high-tech reseller hub that provides booking access to extremely popular, premium-grade branded luxury watches, long-lasting premium fragrances, and elite lifestyle accessories at direct-from-factory wholesale rates. 
+
+💼 *How Can You Benefit?*
+1. *Zero Investment:* Market our catalog directly across your social platforms (WhatsApp Statuses, Instagram Reels, Facebook Marketplace).
+2. *Freedom of Pricing:* Add your desired profit-margins over our wholesale catalog prices. Let us handle the packaging, and enjoy 100% of the profits!
+3. *Easy Order Dispatch:* Enter your client's address and book Cash on Delivery (COD) orders directly. We dispatch under generic merchant name so your customers remain loyal to you!
+
+📺 *Our Important Official Links & Support Desks:*
+• 📺 *YouTube Channel:* ${ytLink} 
+• 📸 *Instagram Page:* ${instaLink} 
+• ✉️ *Support Email Desk:* ${emailContact}
+• 📞 *WhatsApp Business Helpline:* +${helplinePhone}
+
+🔐 *Your Secure Reseller Username:*
+• *Username:* +${cleanPhone}
+• *Registration Date:* ${timestamp}
+
+Browse our live trending items list, list them to your circles, and let's make your dropshipping business highly profitable today!
+━━━━━━━━━━━━━━━━━━━━━
+_Elevate your dropshipping brand with Velriva Reseller Alliance_ 💼✨`;
 
     // Admin notification
-    const adminMsg = `🎉 *ADMIN NOTICE: NEW SIGNUP!*
+    const adminMsg = `🔔 *ADMIN ALERTS: NEW RESELLER SIGNUP* 🔔
 ━━━━━━━━━━━━━━━━━━━━━
-A brand new partner has registered on Velriva!
+A fresh reseller has registered on your portal!
 
-*Partner Name:* ${userName}
-*Mobile Number:* +${cleanPhone}
-*Setup Date:* ${timestamp}
+👤 *New Reseller Details:*
+• *Name:* ${userName}
+• *Mobile/WhatsApp:* +${cleanPhone}
+• *Signup Time:* ${timestamp}
+
+_Open your Admin Panel dashboard to manage users or check database listings._
 ━━━━━━━━━━━━━━━━━━━━━`;
 
     const adminPhone = (process.env.VITE_ADMIN_WHATSAPP || '919690986010').replace(/\D/g, '');
 
+    // Attempt deliveries safely to both people
+    let customerSent = false;
+    let adminSent = false;
+
     try {
       // Send to customer
-      await whatsappService.sendMessage(cleanPhone, customerMsg);
-      // Send to admin
-      await whatsappService.sendMessage(adminPhone, adminMsg);
-      res.json({ success: true, message: 'Signup notifications sent in background' });
-    } catch (err: any) {
-      console.error('Failed to dispatch signup notification:', err);
-      res.status(500).json({ error: 'Failed to dispatch notification', message: err.message });
+      customerSent = await whatsappService.sendMessage(cleanPhone, customerMsg);
+    } catch (err) {
+      console.error('Failed to dispatch registration welcome SMS/WhatsApp to customer:', err);
     }
+
+    try {
+      // Send to admin
+      adminSent = await whatsappService.sendMessage(adminPhone, adminMsg);
+    } catch (err) {
+      console.error('Failed to dispatch registration notice to Admin:', err);
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Signup notifications completed', 
+      delivered: { customer: customerSent, admin: adminSent } 
+    });
   });
 
   // Mount Vite developer middleware for rendering React SPA path in development mode

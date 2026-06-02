@@ -1139,6 +1139,39 @@ ALTER TABLE coupons DISABLE ROW LEVEL SECURITY;`;
                 <span>🔄</span>
                 <span>Once the tables are created, all orders, profiles & settings will sync dynamically to Supabase!</span>
               </div>
+
+              {/* Migration / Fix helper for existing database tables */}
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4.5 space-y-3 mt-3">
+                <div className="flex gap-2">
+                  <span className="text-base text-amber-600">⚠️</span>
+                  <div>
+                    <h4 className="text-xs font-black text-amber-950 uppercase">Running into client_ip / orders schema error?</h4>
+                    <p className="text-[10px] text-amber-800 leading-relaxed mt-1">
+                      If you already created the <code>orders</code> table earlier, it may be missing columns for device or IP tracking. Go to your <strong>Supabase SQL Editor</strong> and run this query to add them:
+                    </p>
+                  </div>
+                </div>
+                <div className="relative">
+                  <pre className="text-[9px] font-mono bg-amber-950 text-amber-100 p-3 rounded-xl block max-w-full overflow-x-auto leading-relaxed select-all whitespace-pre-wrap">
+{`ALTER TABLE orders ADD COLUMN IF NOT EXISTS device_info JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS location_info JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS client_ip TEXT;`}
+                  </pre>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const migrationSql = `ALTER TABLE orders ADD COLUMN IF NOT EXISTS device_info JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS location_info JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS client_ip TEXT;`;
+                      navigator.clipboard.writeText(migrationSql);
+                      showToast('Migration SQL copied!', 'success');
+                    }}
+                    className="absolute right-2 top-2 bg-white/10 hover:bg-white/20 active:scale-95 text-white/90 rounded-md px-1.5 py-0.5 text-[8px] font-bold uppercase transition"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 

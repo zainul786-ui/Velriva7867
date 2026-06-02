@@ -328,9 +328,9 @@ _Marketed by Velriva Dropshipping Network_` : '';
           <div>
             <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">Selected Color: {selectedColor}</h4>
             <div className="flex gap-2.5 mt-2.5">
-              {product.colors.map(col => (
+              {product.colors.map((col, index) => (
                 <button
-                  key={col.name}
+                  key={`${col.name}-${index}`}
                   onClick={() => setSelectedColor(col.name)}
                   className={`flex h-9 items-center gap-1.5 rounded-full border px-3 transition active:scale-95 ${
                     selectedColor === col.name
@@ -351,9 +351,9 @@ _Marketed by Velriva Dropshipping Network_` : '';
           <div>
             <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">Selected Size: {selectedSize}</h4>
             <div className="flex flex-wrap gap-2 mt-2.5">
-              {product.sizes.map(sz => (
+              {product.sizes.map((sz, index) => (
                 <button
-                  key={sz}
+                  key={`${sz}-${index}`}
                   onClick={() => setSelectedSize(sz)}
                   className={`flex h-10 w-12 items-center justify-center rounded-xl font-mono text-xs font-bold transition active:scale-90 ${
                     selectedSize === sz
@@ -426,8 +426,8 @@ _Marketed by Velriva Dropshipping Network_` : '';
               No testimonials published yet. Complete an order to publish a review!
             </p>
           ) : (
-            product.reviews.map(re => (
-              <div key={re.id} className="text-xs space-y-1">
+            product.reviews.map((re, index) => (
+              <div key={re.id || `re-${index}`} className="text-xs space-y-1">
                 <div className="flex items-center justify-between font-bold text-slate-800">
                   <span>{re.userName}</span>
                   <span className="text-[10px] text-slate-400 font-medium font-mono">{re.date}</span>
@@ -435,7 +435,7 @@ _Marketed by Velriva Dropshipping Network_` : '';
                 <div className="flex gap-0.5">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star
-                      key={i}
+                      key={`star-${index}-${i}`}
                       className={`h-3 w-3 ${
                         i < Math.floor(re.rating) ? 'fill-amber-400 text-amber-400' : 'text-slate-200'
                       }`}
@@ -458,8 +458,8 @@ _Marketed by Velriva Dropshipping Network_` : '';
           </div>
 
           <div className="flex gap-3.5 overflow-x-auto px-4 pb-2 scrollbar-none">
-            {relatedProducts.slice(0, 5).map(prod => (
-              <div key={prod.id} className="w-[150px] shrink-0">
+            {relatedProducts.slice(0, 5).map((prod, index) => (
+              <div key={prod.id || index} className="w-[150px] shrink-0">
                 <ProductCard product={prod} />
               </div>
             ))}
