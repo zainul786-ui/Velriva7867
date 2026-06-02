@@ -980,30 +980,154 @@ export const AdminDashboard: React.FC = () => {
 
               {/* Read-only Query code container */}
               <div className="relative">
-                <pre className="text-[9px] font-mono bg-slate-900 text-slate-100 p-3.5 rounded-xl block max-w-full overflow-x-auto leading-relaxed border border-slate-950 select-all whitespace-pre-wrap">
-{`CREATE TABLE IF NOT EXISTS app_settings (
+                <pre className="text-[9px] font-mono bg-slate-900 text-slate-100 p-3.5 rounded-xl block max-w-full overflow-x-auto leading-relaxed border border-slate-950 select-all whitespace-pre-wrap max-h-[220px]">
+{`-- 1. Create APP_SETTINGS (Bypass RLS)
+CREATE TABLE IF NOT EXISTS app_settings (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+ALTER TABLE app_settings DISABLE ROW LEVEL SECURITY;
 
--- Turn off RLS restrictions for settings configuration so that it updates from Admin
-ALTER TABLE app_settings DISABLE ROW LEVEL SECURITY;`}
+-- 2. Create PRODUCTS Table (Bypass RLS)
+CREATE TABLE IF NOT EXISTS products (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    price NUMERIC NOT NULL,
+    old_price NUMERIC,
+    discount NUMERIC,
+    rating NUMERIC DEFAULT 5.0,
+    image TEXT,
+    images JSONB DEFAULT '[]'::jsonb,
+    category TEXT,
+    description TEXT,
+    views_count INTEGER DEFAULT 0,
+    likes_count INTEGER DEFAULT 0,
+    orders_count INTEGER DEFAULT 0,
+    sizes JSONB DEFAULT '[]'::jsonb,
+    colors JSONB DEFAULT '[]'::jsonb,
+    is_featured BOOLEAN DEFAULT false,
+    is_trending BOOLEAN DEFAULT false,
+    is_flash_sale BOOLEAN DEFAULT false,
+    stock INTEGER DEFAULT 0,
+    reviews JSONB DEFAULT '[]'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+ALTER TABLE products DISABLE ROW LEVEL SECURITY;
+
+-- 3. Create PROFILES Table (Bypass RLS)
+CREATE TABLE IF NOT EXISTS profiles (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    phone TEXT,
+    password TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+ALTER TABLE profiles DISABLE ROW LEVEL SECURITY;
+
+-- 4. Create ORDERS Table (Bypass RLS)
+CREATE TABLE IF NOT EXISTS orders (
+    id TEXT PRIMARY KEY,
+    date TEXT NOT NULL,
+    items JSONB DEFAULT '[]'::jsonb,
+    total NUMERIC NOT NULL,
+    status TEXT DEFAULT 'Pending',
+    customer_email TEXT,
+    shipping_address JSONB DEFAULT '{}'::jsonb,
+    tracking JSONB DEFAULT '[]'::jsonb,
+    device_info JSONB DEFAULT '{}'::jsonb,
+    location_info JSONB DEFAULT '{}'::jsonb,
+    client_ip TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+ALTER TABLE orders DISABLE ROW LEVEL SECURITY;
+
+-- 5. Create COUPONS Table (Bypass RLS)
+CREATE TABLE IF NOT EXISTS coupons (
+    code TEXT PRIMARY KEY,
+    discount NUMERIC NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+ALTER TABLE coupons DISABLE ROW LEVEL SECURITY;`}
                 </pre>
                 
                 <button
                   type="button"
                   onClick={() => {
-                    const sqlText = `CREATE TABLE IF NOT EXISTS app_settings (
+                    const sqlText = `-- 1. Create APP_SETTINGS (Bypass RLS)
+CREATE TABLE IF NOT EXISTS app_settings (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+ALTER TABLE app_settings DISABLE ROW LEVEL SECURITY;
 
--- Turn off RLS restrictions for settings configuration so that it updates from Admin
-ALTER TABLE app_settings DISABLE ROW LEVEL SECURITY;`;
+-- 2. Create PRODUCTS Table (Bypass RLS)
+CREATE TABLE IF NOT EXISTS products (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    price NUMERIC NOT NULL,
+    old_price NUMERIC,
+    discount NUMERIC,
+    rating NUMERIC DEFAULT 5.0,
+    image TEXT,
+    images JSONB DEFAULT '[]'::jsonb,
+    category TEXT,
+    description TEXT,
+    views_count INTEGER DEFAULT 0,
+    likes_count INTEGER DEFAULT 0,
+    orders_count INTEGER DEFAULT 0,
+    sizes JSONB DEFAULT '[]'::jsonb,
+    colors JSONB DEFAULT '[]'::jsonb,
+    is_featured BOOLEAN DEFAULT false,
+    is_trending BOOLEAN DEFAULT false,
+    is_flash_sale BOOLEAN DEFAULT false,
+    stock INTEGER DEFAULT 0,
+    reviews JSONB DEFAULT '[]'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+ALTER TABLE products DISABLE ROW LEVEL SECURITY;
+
+-- 3. Create PROFILES Table (Bypass RLS)
+CREATE TABLE IF NOT EXISTS profiles (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    phone TEXT,
+    password TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+ALTER TABLE profiles DISABLE ROW LEVEL SECURITY;
+
+-- 4. Create ORDERS Table (Bypass RLS)
+CREATE TABLE IF NOT EXISTS orders (
+    id TEXT PRIMARY KEY,
+    date TEXT NOT NULL,
+    items JSONB DEFAULT '[]'::jsonb,
+    total NUMERIC NOT NULL,
+    status TEXT DEFAULT 'Pending',
+    customer_email TEXT,
+    shipping_address JSONB DEFAULT '{}'::jsonb,
+    tracking JSONB DEFAULT '[]'::jsonb,
+    device_info JSONB DEFAULT '{}'::jsonb,
+    location_info JSONB DEFAULT '{}'::jsonb,
+    client_ip TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+ALTER TABLE orders DISABLE ROW LEVEL SECURITY;
+
+-- 5. Create COUPONS Table (Bypass RLS)
+CREATE TABLE IF NOT EXISTS coupons (
+    code TEXT PRIMARY KEY,
+    discount NUMERIC NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+ALTER TABLE coupons DISABLE ROW LEVEL SECURITY;`;
                     navigator.clipboard.writeText(sqlText);
-                    showToast('SQL Script copied to clipboard!', 'success');
+                    showToast('Full SQL Setup script copied!', 'success');
                   }}
                   className="absolute right-2.5 top-2.5 bg-white/10 hover:bg-white/20 active:scale-95 text-white/90 rounded-lg px-2 py-1 text-[8px] font-bold uppercase transition"
                 >
@@ -1013,7 +1137,7 @@ ALTER TABLE app_settings DISABLE ROW LEVEL SECURITY;`;
 
               <div className="flex items-center gap-1 text-[9.5px] font-bold text-blue-900">
                 <span>🔄</span>
-                <span>Once the table is created, logos will instantly sync & save to Supabase permanently.</span>
+                <span>Once the tables are created, all orders, profiles & settings will sync dynamically to Supabase!</span>
               </div>
             </div>
           </div>

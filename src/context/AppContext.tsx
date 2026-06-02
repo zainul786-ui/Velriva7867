@@ -506,14 +506,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           if (currentUser && currentUser.isLoggedIn && currentUser.email) {
             orderQuery = orderQuery.eq('customer_email', currentUser.email.trim().toLowerCase());
           } else {
-            setOrders([]);
-            localStorage.setItem('velriva_orders', JSON.stringify([]));
+            // For guest/offline users, do not wipe order records! Preserve local orders from local storage safely.
+            const storedOrders = localStorage.getItem('velriva_orders');
+            if (storedOrders) {
+              try {
+                setOrders(JSON.parse(storedOrders));
+              } catch (e) {
+                setOrders([]);
+              }
+            } else {
+              setOrders([]);
+            }
             return;
           }
         }
 
         const { data: dbOrders, error: ordErr } = await orderQuery;
-        if (!ordErr && dbOrders) {
+        if (ordErr) {
+          console.error("Supabase Error fetching orders:", ordErr.message || ordErr);
+          return;
+        }
+
+        if (dbOrders) {
           const mappedOrders: Order[] = dbOrders.map((o: any) => ({
             id: o.id,
             date: o.date,

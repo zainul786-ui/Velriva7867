@@ -3,7 +3,7 @@ import { useAppState } from '../context/AppContext';
 import { Trash2, ShieldCheck, Moon, RefreshCw, Radio } from 'lucide-react';
 
 export const SettingsScreen: React.FC = () => {
-  const { showToast, navigateTo } = useAppState();
+  const { showToast, navigateTo, currentUser } = useAppState();
 
   const [darkModeMock, setDarkModeMock] = useState(false);
   const [notifyState, setNotifyState] = useState(true);
@@ -134,24 +134,26 @@ export const SettingsScreen: React.FC = () => {
           </button>
         </div>
 
-        {/* Diagnostic Cache Clean area */}
-        <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-xs space-y-4">
-          <div>
-            <h4 className="text-xs font-extrabold text-slate-900">Developer Diagnostic Tools</h4>
-            <p className="text-[10.5px] text-slate-400 leading-relaxed mt-0.5">
-              Ideal for reviewers and administrators wanting to wipe active mock purchases, mock item catalogs, and resets permissions.
-            </p>
-          </div>
+        {/* Diagnostic Cache Clean area - zainulamaan4@gmail.com only! */}
+        {currentUser?.isLoggedIn && currentUser?.email === 'zainulamaan4@gmail.com' && (
+          <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-xs space-y-4">
+            <div>
+              <h4 className="text-xs font-extrabold text-slate-900">Developer Diagnostic Tools</h4>
+              <p className="text-[10.5px] text-slate-400 leading-relaxed mt-0.5">
+                Ideal for reviewers and administrators wanting to wipe active mock purchases, mock item catalogs, and resets permissions.
+              </p>
+            </div>
 
-          <button
-            id="settings-reset-cache-button"
-            onClick={handleResetStorage}
-            className="w-full flex items-center justify-center gap-2 rounded-2xl bg-rose-50 border border-rose-200 text-rose-500 py-3 text-xs font-black hover:bg-rose-100 transition active:scale-98"
-          >
-            <Trash2 className="h-4 w-4 shrink-0" />
-            <span>Wipe Local Cache Storage</span>
-          </button>
-        </div>
+            <button
+              id="settings-reset-cache-button"
+              onClick={handleResetStorage}
+              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-rose-50 border border-rose-200 text-rose-500 py-3 text-xs font-black hover:bg-rose-100 transition active:scale-98"
+            >
+              <Trash2 className="h-4 w-4 shrink-0" />
+              <span>Wipe Local Cache Storage</span>
+            </button>
+          </div>
+        )}
 
         {/* Corporate Legal Footer specifications */}
         <div className="text-center pt-4 text-[10.5px] font-bold text-slate-400 tracking-wider space-y-1">
