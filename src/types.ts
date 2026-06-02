@@ -14,6 +14,7 @@ export type ScreenName =
   | 'trackOrder'
   | 'settings'
   | 'login'
+  | 'legal'
   | 'adminLogin'
   | 'adminDashboard';
 
@@ -82,6 +83,18 @@ export interface Order {
     description: string;
     time: string;
   }[];
+  deviceInfo?: {
+    userAgent?: string;
+    browser?: string;
+    os?: string;
+    device?: string;
+  };
+  locationInfo?: {
+    latitude?: number;
+    longitude?: number;
+    cityName?: string;
+  };
+  clientIp?: string;
 }
 
 export interface Category {

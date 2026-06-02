@@ -15,6 +15,7 @@ interface AppContextType {
   updateProduct: (product: Product) => void;
   deleteProduct: (id: string) => void;
   incrementProductViews: (productId: string) => void;
+  addProductReview: (productId: string, review: { rating: number; name: string; comment: string; date: string }) => void;
   
   // Cart
   cart: CartItem[];
@@ -33,7 +34,12 @@ interface AppContextType {
   
   // Orders
   orders: Order[];
-  placeOrder: (shippingDetails: Order['shippingAddress']) => Order;
+  placeOrder: (
+    shippingDetails: Order['shippingAddress'],
+    geoInfo?: { latitude: number; longitude: number; cityName?: string },
+    devInfo?: { userAgent?: string; browser?: string; os?: string; device?: string },
+    ipAddress?: string
+  ) => Order;
   updateOrderStatus: (orderId: string, status: Order['status'], trackingDetails?: string) => void;
   
   // Promo Banners & Ads
@@ -705,6 +711,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('Product updated successfully!');
   };
 
+  const addProductReview = (productId: string, review: { rating: number; name: string; comment: string; date: string }) => {
+    const p = products.find(prod => prod.id === productId);
+    if (!p) return;
+    const currentReviews = p.reviews || [];
+    const newReviews = [review, ...currentReviews];
+    
+    // Average rating recalculation
+    const totalRating = newReviews.reduce((sum, r) => sum + r.rating, 0);
+    const avgRating = Number((totalRating / newReviews.length).toFixed(1));
+
+    const updatedProduct = {
+      ...p,
+      reviews: newReviews,
+      rating: avgRating,
+    };
+    
+    updateProduct(updatedProduct);
+  };
+
   const deleteProduct = (id: string) => {
     const updated = products.filter(item => item.id !== id);
     syncProducts(updated);
@@ -853,11 +878,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Order Placement
-  const placeOrder = (shippingDetails: Order['shippingAddress']) => {
+  const placeOrder = (
+    shippingDetails: Order['shippingAddress'],
+    geoInfo?: { latitude: number; longitude: number; cityName?: string },
+    devInfo?: { userAgent?: string; browser?: string; os?: string; device?: string },
+    ipAddress?: string
+  ) => {
     const orderId = `VEL-${Math.floor(100000 + Math.random() * 900000)}`;
     const subtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
     const discountAmount = appliedCoupon ? Math.round(subtotal * (appliedCoupon.discount / 100)) : 0;
     const finalTotal = Math.max(0, subtotal - discountAmount);
+
+    // Automatic User-Agent detection fallback
+    const computedDevInfo = devInfo || (() => {
+      if (typeof window === 'undefined') return undefined;
+      const ua = navigator.userAgent;
+      let browser = 'Unknown Browser';
+      let os = 'Unknown OS';
+      let device = 'Desktop';
+
+      if (ua.includes('Firefox')) browser = 'Firefox';
+      else if (ua.includes('Chrome')) browser = 'Chrome';
+      else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
+      else if (ua.includes('Edge')) browser = 'Microsoft Edge';
+
+      if (ua.includes('Windows')) os = 'Windows';
+      else if (ua.includes('Macintosh') || ua.includes('Mac OS')) os = 'macOS';
+      else if (ua.includes('Android')) { os = 'Android'; device = 'Mobile'; }
+      else if (ua.includes('iPhone') || ua.includes('iPad')) { os = 'iOS'; device = 'Mobile/Tablet'; }
+      else if (ua.includes('Linux')) os = 'Linux';
+
+      return { userAgent: ua, browser, os, device };
+    })();
 
     const newOrder: Order = {
       id: orderId,
@@ -880,6 +932,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
         },
       ],
+      deviceInfo: computedDevInfo,
+      locationInfo: geoInfo,
+      clientIp: ipAddress
     };
 
     const updatedOrders = [newOrder, ...orders];
@@ -949,7 +1004,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         status: 'Pending',
         customer_email: currentUser && currentUser.isLoggedIn ? currentUser.email : null,
         shipping_address: shippingDetails,
-        tracking: newOrder.tracking
+        tracking: newOrder.tracking,
+        device_info: computedDevInfo,
+        location_info: geoInfo,
+        client_ip: ipAddress
       }).then(({ error }) => {
         if (error) {
           console.error("Supabase failed to record order entry:", error);
@@ -1016,19 +1074,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Authentication
   const registerUser = async (name: string, email: string, password: string, phone: string): Promise<boolean | string> => {
-    const formattedEmail = email.trim().toLowerCase();
+    // If email is not passed or empty, generate a virtual email Address
+    const rawEmail = (email && email.trim()) ? email.trim() : `${phone.replace(/\D/g, '') || Date.now()}@velriva.com`;
+    const formattedEmail = rawEmail.toLowerCase();
+    const cleanPhone = phone.replace(/\D/g, '');
 
     // 1. SUPABASE PATH
     if (isSupabaseConfigured && supabase) {
       try {
+        // Check if phone or email already registered in Supabase
         const { data: existingProfile, error: getErr } = await supabase
           .from('profiles')
-          .select('email')
-          .eq('email', formattedEmail)
+          .select('id, email, phone')
+          .or(`email.eq.${formattedEmail},phone.eq.${cleanPhone}`)
           .maybeSingle();
 
         if (existingProfile) {
-          return 'Account with this email already exists on Supabase!';
+          return 'An account with this phone number or email already exists. Please login!';
         }
 
         const newId = `usr_${Date.now()}`;
@@ -1038,7 +1100,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             id: newId,
             name: name.trim(),
             email: formattedEmail,
-            phone: phone.trim(),
+            phone: cleanPhone,
             password: password
           });
 
@@ -1051,7 +1113,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           id: newId,
           name: name.trim(),
           email: formattedEmail,
-          phone: phone.trim(),
+          phone: cleanPhone,
           isLoggedIn: true
         };
         setCurrentUser(user);
@@ -1070,6 +1132,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         localStorage.setItem('velriva_wishlist', JSON.stringify([]));
         localStorage.setItem('velriva_orders', JSON.stringify([]));
 
+        // Background call to trigger WhatsApp Registration success message
+        fetch(getApiUrl('/api/whatsapp/notify-register'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: user.name, phone: user.phone })
+        }).catch(() => {});
+
         showToast(`Account created on Supabase! Welcome, ${name.trim()}!`, 'success');
         return true;
       } catch (err: any) {
@@ -1081,15 +1150,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const storedAccounts = localStorage.getItem('velriva_accounts');
     const dbAccounts = storedAccounts ? JSON.parse(storedAccounts) : [];
     
-    if (dbAccounts.some((acc: any) => acc.email.toLowerCase() === formattedEmail)) {
-      return 'Account with this email already exists!';
+    if (dbAccounts.some((acc: any) => acc.email.toLowerCase() === formattedEmail || (acc.phone && acc.phone.replace(/\D/g, '') === cleanPhone))) {
+      return 'Account with this phone number or email already exists!';
     }
 
     const newAccount = {
       id: `usr_${Date.now()}`,
       name: name.trim(),
       email: formattedEmail,
-      phone: phone.trim(),
+      phone: cleanPhone,
       password: password,
       cart: [],
       wishlist: [],
@@ -1119,37 +1188,64 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('velriva_wishlist', JSON.stringify([]));
     localStorage.setItem('velriva_orders', JSON.stringify([]));
 
-    showToast(`Welcome back, ${newAccount.name}!`);
+    // Background call to trigger WhatsApp Registration success message
+    fetch(getApiUrl('/api/whatsapp/notify-register'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: user.name, phone: user.phone })
+    }).catch(() => {});
+
+    showToast(`Account created successfully! Welcome, ${newAccount.name}!`, 'success');
     return true;
   };
 
-  const loginUser = async (email: string, password: string): Promise<boolean | string> => {
-    const formattedEmail = email.trim().toLowerCase();
+  const loginUser = async (phoneOrEmail: string, password: string): Promise<boolean | string> => {
+    const formattedInput = phoneOrEmail.trim().toLowerCase();
+    let cleanPhoneInput = phoneOrEmail.replace(/\D/g, '');
+    if (cleanPhoneInput.length === 10) {
+      cleanPhoneInput = '91' + cleanPhoneInput;
+    }
 
     // 1. SUPABASE PATH
     if (isSupabaseConfigured && supabase) {
       try {
-        const { data: account, error: getErr } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('email', formattedEmail)
-          .maybeSingle();
+        let account: any = null;
+        let getErr: any = null;
+
+        if (formattedInput.includes('@')) {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('email', formattedInput)
+            .maybeSingle();
+          account = data;
+          getErr = error;
+        } else if (cleanPhoneInput) {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('phone', cleanPhoneInput);
+          if (data && data.length > 0) {
+            account = data[0];
+          }
+          getErr = error;
+        }
 
         if (getErr) {
           return `Supabase profile fetch error: ${getErr.message}`;
         }
         if (!account) {
-          return 'Account not found in Supabase! Register a new profile.';
+          return 'No partner profile matches this phone or email. Register a new profile.';
         }
         if (account.password !== password) {
-          return 'Incorrect security password. Try again!';
+          return 'Incorrect security password. Please try again!';
         }
 
         // Login success
         const user: User = {
           id: account.id,
           name: account.name,
-          email: account.email,
+          email: account.email || `${account.phone}@velriva.com`,
           phone: account.phone || '',
           isLoggedIn: true
         };
@@ -1160,7 +1256,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const { data: userOrders, error: ordersErr } = await supabase
           .from('orders')
           .select('*')
-          .eq('customer_email', formattedEmail);
+          .eq('customer_email', user.email);
 
         const restoredOrders: Order[] = !ordersErr && userOrders
           ? userOrders.map((o: any) => ({
@@ -1183,7 +1279,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         localStorage.setItem('velriva_cart', JSON.stringify([]));
         localStorage.setItem('velriva_wishlist', JSON.stringify([]));
 
-        showToast(`Verified via Supabase. Welcome, ${account.name}!`);
+        // Background call to trigger WhatsApp Login success message
+        fetch(getApiUrl('/api/whatsapp/notify-login'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: user.name, phone: user.phone })
+        }).catch(() => {});
+
+        showToast(`Welcome back, ${user.name}! Connected securely.`, 'success');
         return true;
       } catch (err: any) {
         return `Supabase query connection error: ${err.message || err}`;
@@ -1194,7 +1297,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const storedAccounts = localStorage.getItem('velriva_accounts');
     const dbAccounts = storedAccounts ? JSON.parse(storedAccounts) : [];
     
-    const account = dbAccounts.find((acc: any) => acc.email.toLowerCase() === formattedEmail);
+    const account = dbAccounts.find((acc: any) => {
+      const cmpEmail = acc.email ? acc.email.toLowerCase() : '';
+      const cmpPhone = acc.phone ? acc.phone.replace(/\D/g, '') : '';
+      return cmpEmail === formattedInput || (cleanPhoneInput && cmpPhone.endsWith(cleanPhoneInput.substring(cleanPhoneInput.length - 10)));
+    });
+
     if (!account) {
       return 'Account not found! Register a new profile.';
     }
@@ -1222,7 +1330,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('velriva_wishlist', JSON.stringify(account.wishlist || []));
     localStorage.setItem('velriva_orders', JSON.stringify(account.orders || []));
 
-    showToast(`Session verified. Welcome back, ${account.name}!`);
+    // Background call to trigger WhatsApp Login message
+    fetch(getApiUrl('/api/whatsapp/notify-login'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: user.name, phone: user.phone })
+    }).catch(() => {});
+
+    showToast(`Session verified. Welcome back, ${account.name}!`, 'success');
     return true;
   };
 
@@ -1242,28 +1357,120 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('Logged out of user account', 'info');
   };
 
-  const sendLoginOtp = async (phone: string): Promise<{ success: boolean; offlineFallback?: boolean; devOtp?: string; error?: string }> => {
+  const sendLoginOtp = async (emailOrPhone: string): Promise<{ success: boolean; offlineFallback?: boolean; devOtp?: string; error?: string }> => {
     try {
-      const trimmedPhone = phone.trim();
-      if (!trimmedPhone) {
-        return { success: false, error: 'Phone number is required' };
+      const trimmedInput = emailOrPhone.trim();
+      if (!trimmedInput) {
+        return { success: false, error: 'Email address or Phone number is required' };
       }
 
-      const response = await fetch(getApiUrl('/api/auth/send-otp'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: trimmedPhone })
-      });
+      const isEmail = trimmedInput.includes('@');
 
-      const resData = await response.json();
-      if (response.ok && resData.success) {
-        return { 
-          success: true, 
-          offlineFallback: resData.offlineFallback, 
-          devOtp: resData.devOtp 
+      if (isEmail) {
+        const emailLower = trimmedInput.toLowerCase();
+        // 1. SUPABASE PATH (Send real Email OTP)
+        if (isSupabaseConfigured && supabase) {
+          console.log(`🔐 Triggering Supabase Email Auth OTP for: ${emailLower}`);
+          try {
+            const { error } = await supabase.auth.signInWithOtp({
+              email: emailLower,
+              options: {
+                shouldCreateUser: true
+              }
+            });
+
+            if (error) {
+              console.error('Supabase signInWithOtp with email error:', error);
+              // Automatic graceful sandbox fallback to bypass rate limits or connection errors
+              const mockOtp = Math.floor(100000 + Math.random() * 900000).toString();
+              localStorage.setItem(`velriva_otp_${emailLower}`, mockOtp);
+              return { 
+                success: true, 
+                offlineFallback: true,
+                devOtp: mockOtp,
+                error: `Supabase returned rate limits or setup issue: ${error.message || error}. Falling back to Live Sandbox OTP.`
+              };
+            }
+
+            return { 
+              success: true, 
+              offlineFallback: false,
+              devOtp: '' // Real email code dispatched via Supabase Gateway
+            };
+          } catch (fetchErr: any) {
+            console.warn('Supabase signInWithOtp threw an exception, failing over to local sandbox OTP:', fetchErr);
+            const mockOtp = Math.floor(100000 + Math.random() * 900000).toString();
+            localStorage.setItem(`velriva_otp_${emailLower}`, mockOtp);
+            return { 
+              success: true, 
+              offlineFallback: true,
+              devOtp: mockOtp,
+              error: `Supabase rate-limit reached or network offline. Falling back to Live Sandbox OTP.`
+            };
+          }
+        }
+
+        // 2. OFFLINE FALLBACK
+        const mockOtp = Math.floor(100000 + Math.random() * 900000).toString();
+        localStorage.setItem(`velriva_otp_${emailLower}`, mockOtp);
+        console.log(`[OFFLINE DEV OTP ONLY] Mock code ${mockOtp} saved for email: ${emailLower}`);
+
+        return {
+          success: true,
+          offlineFallback: true,
+          devOtp: mockOtp
         };
       } else {
-        return { success: false, error: resData.error || resData.message || 'Failed to send OTP' };
+        // PHONE FALLBACK FOR BACKWARDS COMPATIBILITY
+        let cleanPhone = trimmedInput.replace(/\D/g, '');
+        if (cleanPhone.length === 10) {
+          cleanPhone = '91' + cleanPhone;
+        }
+        const e164Phone = '+' + cleanPhone;
+
+        if (isSupabaseConfigured && supabase) {
+          console.log(`🔐 Triggering Supabase Phone Auth SMS OTP for: ${e164Phone}`);
+          try {
+            const { error } = await supabase.auth.signInWithOtp({
+              phone: e164Phone,
+            });
+
+            if (error) {
+              console.error('Supabase signInWithOtp error:', error);
+              const mockOtp = Math.floor(100000 + Math.random() * 900000).toString();
+              localStorage.setItem(`velriva_otp_${cleanPhone}`, mockOtp);
+              return { 
+                success: true, 
+                offlineFallback: true,
+                devOtp: mockOtp,
+                error: `Supabase rate limits: ${error.message}. Falling back to Live Sandbox OTP.`
+              };
+            }
+
+            return { 
+              success: true, 
+              offlineFallback: false,
+              devOtp: ''
+            };
+          } catch (fetchErr) {
+            const mockOtp = Math.floor(100000 + Math.random() * 900000).toString();
+            localStorage.setItem(`velriva_otp_${cleanPhone}`, mockOtp);
+            return { 
+              success: true, 
+              offlineFallback: true,
+              devOtp: mockOtp,
+              error: `Supabase offline. Falling back to Live Sandbox OTP.`
+            };
+          }
+        }
+
+        const mockOtp = Math.floor(100000 + Math.random() * 900000).toString();
+        localStorage.setItem(`velriva_otp_${cleanPhone}`, mockOtp);
+        return {
+          success: true,
+          offlineFallback: true,
+          devOtp: mockOtp
+        };
       }
     } catch (e: any) {
       console.error('sendLoginOtp connection exception:', e);
@@ -1271,130 +1478,231 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const verifyLoginOtp = async (phone: string, otp: string): Promise<{ success: boolean; user?: User; error?: string }> => {
+  const verifyLoginOtp = async (emailOrPhone: string, otp: string): Promise<{ success: boolean; user?: User; error?: string }> => {
     try {
-      const trimmedPhone = phone.trim();
+      const trimmedInput = emailOrPhone.trim();
       const trimmedOtp = otp.trim();
 
-      if (!trimmedPhone || !trimmedOtp) {
-        return { success: false, error: 'Phone and OTP are required' };
+      if (!trimmedInput || !trimmedOtp) {
+        return { success: false, error: 'Email/Phone and OTP token are required' };
       }
 
-      const response = await fetch(getApiUrl('/api/auth/verify-otp'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: trimmedPhone, otp: trimmedOtp })
-      });
+      const isEmail = trimmedInput.includes('@');
 
-      const resData = await response.json();
-      if (!response.ok || !resData.success) {
-        return { success: false, error: resData.error || resData.message || 'Verification failed' };
-      }
+      if (isEmail) {
+        const emailLower = trimmedInput.toLowerCase();
 
-      // OTP verified successfully!
-      // Now, try to load profile from Supabase with search query by phone
-      let cleanPhone = trimmedPhone.replace(/\D/g, '');
-      if (cleanPhone.length === 10) {
-        cleanPhone = '91' + cleanPhone;
-      }
+        // 1. SUPABASE PATH (Verify real Email OTP via Supabase Auth client)
+        if (isSupabaseConfigured && supabase) {
+          console.log(`🔐 Verifying Supabase Email Auth OTP token for: ${emailLower}`);
+          
+          let verifyResult = await supabase.auth.verifyOtp({
+            email: emailLower,
+            token: trimmedOtp,
+            type: 'email'
+          });
 
-      let matchedAccount: any = null;
-
-      if (isSupabaseConfigured && supabase) {
-        const { data: dbAccount, error: getErr } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('phone', cleanPhone);
-
-        if (!getErr && dbAccount && dbAccount.length > 0) {
-          matchedAccount = dbAccount[0];
-        } else {
-          // Fallback: search by original format
-          const { data: dbAccountAlt } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('phone', trimmedPhone);
-
-          if (dbAccountAlt && dbAccountAlt.length > 0) {
-            matchedAccount = dbAccountAlt[0];
-          } else {
-            // ALT fallback: match by last 10 digits
-            const raw10Digits = cleanPhone.substring(cleanPhone.length - 10);
-            if (raw10Digits.length === 10) {
-              const { data: dbAccountAlt2 } = await supabase
-                .from('profiles')
-                .select('*')
-                .like('phone', `%${raw10Digits}`);
-              if (dbAccountAlt2 && dbAccountAlt2.length > 0) {
-                matchedAccount = dbAccountAlt2[0];
-              }
+          if (verifyResult.error) {
+            // Try 'signup' fallback standard verification
+            const signupFallback = await supabase.auth.verifyOtp({
+              email: emailLower,
+              token: trimmedOtp,
+              type: 'signup'
+            });
+            if (!signupFallback.error) {
+              verifyResult = signupFallback;
             }
           }
+
+          if (verifyResult.error) {
+            console.warn('Supabase verifyOtp error, checking local fallback container:', verifyResult.error.message);
+            // Graceful check for sandbox fallback code
+            const savedOtp = localStorage.getItem(`velriva_otp_${emailLower}`);
+            if (savedOtp && savedOtp === trimmedOtp) {
+              console.log('🎉 Verified via Local Sandbox Code successfully.');
+            } else {
+              return { success: false, error: `Supabase Auth OTP verification failed: ${verifyResult.error.message}` };
+            }
+          }
+
+          // Successfully verified! Search for profile
+          let matchedAccount: any = null;
+          const { data: dbAccount, error: getErr } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('email', emailLower);
+
+          if (!getErr && dbAccount && dbAccount.length > 0) {
+            matchedAccount = dbAccount[0];
+          }
+
+          if (!matchedAccount) {
+            return { success: true, error: 'reseller_not_found' }; 
+          }
+
+          // Existing profile matches! Complete login
+          const user: User = {
+            id: matchedAccount.id,
+            name: matchedAccount.name,
+            email: matchedAccount.email,
+            phone: matchedAccount.phone || undefined,
+            isLoggedIn: true
+          };
+
+          setCurrentUser(user);
+          localStorage.setItem('velriva_user', JSON.stringify(user));
+
+          // Restore orders
+          let restoredOrders: Order[] = [];
+          const { data: userOrders } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('customer_email', matchedAccount.email);
+
+          if (userOrders) {
+            restoredOrders = userOrders.map((o: any) => ({
+              id: o.id,
+              date: o.date,
+              items: o.items || [],
+              total: Number(o.total),
+              status: o.status,
+              customerEmail: o.customer_email || undefined,
+              shippingAddress: o.shipping_address || {},
+              tracking: o.tracking || []
+            }));
+          }
+
+          setOrders(restoredOrders);
+          localStorage.setItem('velriva_orders', JSON.stringify(restoredOrders));
+
+          setCart([]);
+          setWishlist([]);
+          localStorage.setItem('velriva_cart', JSON.stringify([]));
+          localStorage.setItem('velriva_wishlist', JSON.stringify([]));
+
+          showToast(`Welcome back to VELRIVA, ${matchedAccount.name}!`, 'success');
+          return { success: true, user };
         }
-      }
 
-      // If offline or profile was not in database yet, look in offline accounts cache
-      if (!matchedAccount) {
-        const storedAccounts = localStorage.getItem('velriva_accounts');
-        const dbAccounts = storedAccounts ? JSON.parse(storedAccounts) : [];
-        matchedAccount = dbAccounts.find((acc: any) => {
-          const accPhone = (acc.phone || '').replace(/\D/g, '');
-          const searchPhone = cleanPhone;
-          return accPhone.endsWith(searchPhone.substring(searchPhone.length - 10));
-        });
-      }
+        // 2. OFFLINE FALLBACK
+        const savedOtp = localStorage.getItem(`velriva_otp_${emailLower}`);
+        if (savedOtp && savedOtp === trimmedOtp) {
+          let matchedAccount: any = null;
+          const storedAccounts = localStorage.getItem('velriva_accounts');
+          const dbAccounts = storedAccounts ? JSON.parse(storedAccounts) : [];
+          matchedAccount = dbAccounts.find((acc: any) => acc.email.toLowerCase() === emailLower);
 
-      if (!matchedAccount) {
-         return { success: false, error: 'reseller_not_found' }; // UI redirect/warning identifier
-      }
+          if (!matchedAccount) {
+            return { success: true, error: 'reseller_not_found' }; 
+          }
 
-      // Successfully found profile! Let's build User object
-      const user: User = {
-        id: matchedAccount.id,
-        name: matchedAccount.name,
-        email: matchedAccount.email,
-        phone: matchedAccount.phone || trimmedPhone,
-        isLoggedIn: true
-      };
+          const user: User = {
+            id: matchedAccount.id,
+            name: matchedAccount.name,
+            email: matchedAccount.email,
+            phone: matchedAccount.phone || undefined,
+            isLoggedIn: true
+          };
 
-      setCurrentUser(user);
-      localStorage.setItem('velriva_user', JSON.stringify(user));
+          setCurrentUser(user);
+          localStorage.setItem('velriva_user', JSON.stringify(user));
 
-      // Restore orders from Supabase if active
-      let restoredOrders: Order[] = [];
-      if (isSupabaseConfigured && supabase) {
-        const { data: userOrders } = await supabase
-          .from('orders')
-          .select('*')
-          .eq('customer_email', matchedAccount.email);
+          setOrders(matchedAccount.orders || []);
+          localStorage.setItem('velriva_orders', JSON.stringify(matchedAccount.orders || []));
+          setCart([]);
+          setWishlist([]);
+          localStorage.setItem('velriva_cart', JSON.stringify([]));
+          localStorage.setItem('velriva_wishlist', JSON.stringify([]));
 
-        if (userOrders) {
-          restoredOrders = userOrders.map((o: any) => ({
-            id: o.id,
-            date: o.date,
-            items: o.items || [],
-            total: Number(o.total),
-            status: o.status,
-            customerEmail: o.customer_email || undefined,
-            shippingAddress: o.shipping_address || {},
-            tracking: o.tracking || []
-          }));
+          showToast(`Welcome back, ${matchedAccount.name}!`, 'success');
+          return { success: true, user };
+        } else {
+          return { success: false, error: 'The verification code you entered is incorrect.' };
         }
       } else {
-        restoredOrders = matchedAccount.orders || [];
+        // PHONE LOGIC
+        let cleanPhone = trimmedInput.replace(/\D/g, '');
+        if (cleanPhone.length === 10) {
+          cleanPhone = '91' + cleanPhone;
+        }
+
+        if (isSupabaseConfigured && supabase) {
+          const { data, error } = await supabase.auth.verifyOtp({
+            phone: '+' + cleanPhone,
+            token: trimmedOtp,
+            type: 'sms'
+          });
+
+          if (error) {
+            return { success: false, error: `Supabase Auth OTP verification failed: ${error.message}` };
+          }
+
+          let matchedAccount: any = null;
+          const { data: dbAccount } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('phone', cleanPhone);
+
+          if (dbAccount && dbAccount.length > 0) {
+            matchedAccount = dbAccount[0];
+          }
+
+          if (!matchedAccount) {
+            return { success: true, error: 'reseller_not_found' };
+          }
+
+          const user: User = {
+            id: matchedAccount.id,
+            name: matchedAccount.name,
+            email: matchedAccount.email,
+            phone: matchedAccount.phone,
+            isLoggedIn: true
+          };
+
+          setCurrentUser(user);
+          localStorage.setItem('velriva_user', JSON.stringify(user));
+
+          return { success: true, user };
+        }
+
+        const savedOtp = localStorage.getItem(`velriva_otp_${cleanPhone}`);
+        if (savedOtp && savedOtp === trimmedOtp) {
+          let matchedAccount: any = null;
+          const storedAccounts = localStorage.getItem('velriva_accounts');
+          const dbAccounts = storedAccounts ? JSON.parse(storedAccounts) : [];
+          matchedAccount = dbAccounts.find((acc: any) => {
+            const accPhone = (acc.phone || '').replace(/\D/g, '');
+            return accPhone.endsWith(cleanPhone.substring(cleanPhone.length - 10));
+          });
+
+          if (!matchedAccount) {
+            return { success: true, error: 'reseller_not_found' };
+          }
+
+          const user: User = {
+            id: matchedAccount.id,
+            name: matchedAccount.name,
+            email: matchedAccount.email,
+            phone: matchedAccount.phone || trimmedInput,
+            isLoggedIn: true
+          };
+
+          setCurrentUser(user);
+          localStorage.setItem('velriva_user', JSON.stringify(user));
+
+          setOrders(matchedAccount.orders || []);
+          localStorage.setItem('velriva_orders', JSON.stringify(matchedAccount.orders || []));
+          setCart([]);
+          setWishlist([]);
+          localStorage.setItem('velriva_cart', JSON.stringify([]));
+          localStorage.setItem('velriva_wishlist', JSON.stringify([]));
+
+          showToast(`Welcome back, ${matchedAccount.name}!`, 'success');
+          return { success: true, user };
+        } else {
+          return { success: false, error: 'The verification code is incorrect.' };
+        }
       }
-
-      setOrders(restoredOrders);
-      localStorage.setItem('velriva_orders', JSON.stringify(restoredOrders));
-
-      setCart([]);
-      setWishlist([]);
-      localStorage.setItem('velriva_cart', JSON.stringify([]));
-      localStorage.setItem('velriva_wishlist', JSON.stringify([]));
-
-      showToast(`Welcome to VELRIVA, ${matchedAccount.name}!`, 'success');
-      return { success: true, user };
-
     } catch (e: any) {
       console.error('verifyLoginOtp error:', e);
       return { success: false, error: `Verification failed: ${e.message || e}` };
@@ -1513,6 +1821,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateProduct,
         deleteProduct,
         incrementProductViews,
+        addProductReview,
         cart,
         addToCart,
         removeFromCart,

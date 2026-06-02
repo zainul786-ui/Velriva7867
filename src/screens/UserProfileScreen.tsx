@@ -20,6 +20,13 @@ export const UserProfileScreen: React.FC = () => {
 
   const menuItems = [
     {
+      id: 'profile-legal',
+      title: 'Terms, Conditions & Easy Returns',
+      subtitle: 'Refund process, 4-day returns policy, reviewer standards',
+      icon: ShieldCheck,
+      action: () => navigateTo('legal'),
+    },
+    {
       id: 'profile-orders',
       title: 'Current & Past Orders',
       subtitle: `${orders.length} orders recorded`,
@@ -100,6 +107,15 @@ export const UserProfileScreen: React.FC = () => {
             className="w-full max-w-xs rounded-2xl bg-slate-950 py-3.5 text-xs font-black text-white hover:bg-slate-900 active:scale-95 transition shadow-md"
           >
             Authenticate Customer Session
+          </button>
+
+          <button
+            id="profile-anonymous-legal"
+            onClick={() => navigateTo('legal')}
+            className="w-full max-w-xs flex items-center justify-center gap-1.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 py-3 text-xs font-bold transition active:scale-95 cursor-pointer shadow-xs"
+          >
+            <ShieldCheck className="h-4 w-4 text-emerald-600" />
+            <span>Store Terms & Return Policies</span>
           </button>
         </div>
       ) : (

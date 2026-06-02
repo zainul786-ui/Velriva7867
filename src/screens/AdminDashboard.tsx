@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAppState } from '../context/AppContext';
 import { Product, Order, PromoBanner, Coupon } from '../types';
 import { CATEGORIES } from '../data/mockData';
-import { BarChart3, Package, Truck, LayoutGrid, Plus, Edit3, Trash2, X, Search, Check, Save, Smartphone, Laptop, Tablet, TrendingUp, Sparkles, UserCheck, Megaphone, Percent, Tag, FileImage, Upload, Instagram, Youtube, Mail, HelpCircle } from 'lucide-react';
+import { BarChart3, Package, Truck, LayoutGrid, Plus, Edit3, Trash2, X, Search, Check, Save, Smartphone, Laptop, Tablet, TrendingUp, Sparkles, UserCheck, Megaphone, Percent, Tag, FileImage, Cpu, Upload, Instagram, Youtube, Mail, HelpCircle } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
   const { 
@@ -150,6 +150,7 @@ export const AdminDashboard: React.FC = () => {
   
   // Search parameters inside dashboard
   const [dbSearch, setDbSearch ] = useState('');
+  const [orderFilter, setOrderFilter] = useState<'all' | 'active' | 'completed' | 'cancelled' | 'new'>('all');
 
   // Marketing states
   const [newCouponCode, setNewCouponCode] = useState('');
@@ -264,6 +265,22 @@ export const AdminDashboard: React.FC = () => {
     o.id.toLowerCase().includes(dbSearch.toLowerCase()) ||
     o.shippingAddress.name.toLowerCase().includes(dbSearch.toLowerCase())
   );
+
+  const filteredOrders = queriedOrders.filter(o => {
+    if (orderFilter === 'active') {
+      return ['Pending', 'Shipped', 'Out for Delivery'].includes(o.status);
+    }
+    if (orderFilter === 'completed') {
+      return o.status === 'Delivered';
+    }
+    if (orderFilter === 'cancelled') {
+      return o.status === 'Cancelled';
+    }
+    if (orderFilter === 'new') {
+      return o.status === 'Pending';
+    }
+    return true; // default: 'all'
+  });
 
   return (
     <div id="admin-dashboard-layout" className="pb-24 pt-2">
@@ -628,15 +645,76 @@ export const AdminDashboard: React.FC = () => {
       {/* TAB C: MANAGE ORDERS PANEL */}
       {activeTab === 'orders' && (
         <div className="px-4 mt-5 space-y-4">
-          <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">Manage COD Deliveries ({queriedOrders.length})</h3>
+          <div className="flex flex-col gap-2.5 pb-2 border-b border-slate-150">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">Manage COD Deliveries ({filteredOrders.length})</h3>
+            
+            {/* Horizontal Sub-tabs Pills to Filter Orders */}
+            <div className="flex gap-1.5 overflow-x-auto scrollbar-none pb-1">
+              <button
+                type="button"
+                onClick={() => setOrderFilter('all')}
+                className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0 transition active:scale-95 ${
+                  orderFilter === 'all' 
+                    ? 'bg-slate-950 text-white shadow-xs' 
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-250'
+                }`}
+              >
+                All ({queriedOrders.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setOrderFilter('new')}
+                className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0 transition active:scale-95 flex items-center gap-1 ${
+                  orderFilter === 'new' 
+                    ? 'bg-amber-400 text-slate-950 shadow-xs' 
+                    : 'bg-amber-100 text-amber-800 hover:bg-amber-150'
+                }`}
+              >
+                Pending ({queriedOrders.filter(o => o.status === 'Pending').length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setOrderFilter('active')}
+                className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0 transition active:scale-95 ${
+                  orderFilter === 'active' 
+                    ? 'bg-blue-600 text-white shadow-xs' 
+                    : 'bg-blue-50 text-blue-800 hover:bg-blue-100'
+                }`}
+              >
+                In Progress ({queriedOrders.filter(o => ['Pending', 'Shipped', 'Out for Delivery'].includes(o.status)).length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setOrderFilter('completed')}
+                className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0 transition active:scale-95 ${
+                  orderFilter === 'completed' 
+                    ? 'bg-emerald-600 text-white shadow-xs' 
+                    : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                }`}
+              >
+                Delivered ({queriedOrders.filter(o => o.status === 'Delivered').length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setOrderFilter('cancelled')}
+                className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0 transition active:scale-95 ${
+                  orderFilter === 'cancelled' 
+                    ? 'bg-rose-600 text-white shadow-xs' 
+                    : 'bg-rose-50 text-rose-800 hover:bg-rose-100'
+                }`}
+              >
+                Cancelled ({queriedOrders.filter(o => o.status === 'Cancelled').length})
+              </button>
+            </div>
+          </div>
 
           <div className="space-y-4">
-            {queriedOrders.length === 0 ? (
-              <p className="py-12 text-center text-xs font-medium text-slate-400">
-                No orders discovered matching typed search filters.
+            {filteredOrders.length === 0 ? (
+              <p className="py-12 text-center text-xs font-medium text-slate-400 bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
+                No orders discovered matching "{orderFilter}" filter status.
               </p>
             ) : (
-              queriedOrders.map(order => (
+              filteredOrders.map(order => (
                 <div
                   key={order.id}
                   className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm"
@@ -692,6 +770,48 @@ export const AdminDashboard: React.FC = () => {
                     <p className="text-slate-500 leading-normal">{order.shippingAddress.address}, {order.shippingAddress.city} - {order.shippingAddress.pincode}</p>
                     <p className="font-mono text-[10.5px] font-bold text-slate-500">Tel contact: {order.shippingAddress.phone}</p>
                   </div>
+
+                  {/* Client Telemetry, Location coordinate GPS & IP Audit Tracker */}
+                  {(order.deviceInfo || order.locationInfo || order.clientIp) && (
+                    <div className="mt-2.5 bg-slate-950 text-slate-100 rounded-2xl p-3 border border-slate-900 font-mono text-[10.5px] leading-relaxed space-y-1.5">
+                      <div className="flex items-center gap-1.5 border-b border-slate-900 pb-1 text-[8.5px] text-amber-400 font-extrabold font-sans uppercase tracking-wider">
+                        <Cpu className="h-3 w-3 text-amber-400" />
+                        <span>Reseller Device & Location Audit</span>
+                      </div>
+                      
+                      {order.deviceInfo && (
+                        <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-slate-300">
+                          <div><span className="text-slate-500 text-[9px] font-sans uppercase">Platform</span> <span className="font-bold text-slate-200 block">{order.deviceInfo.os || 'N/A'}</span></div>
+                          <div><span className="text-slate-500 text-[9px] font-sans uppercase">Display Mode</span> <span className="font-bold text-slate-200 block">{order.deviceInfo.device || 'N/A'}</span></div>
+                        </div>
+                      )}
+
+                      {(order.locationInfo || order.clientIp) && (
+                        <div className="space-y-1 pt-1 border-t border-slate-900 text-slate-300">
+                          {order.clientIp && (
+                            <div>
+                              <span className="text-slate-500 text-[9px] font-sans uppercase mr-1">IPv4 Addr</span>
+                              <span className="font-bold text-emerald-400">{order.clientIp}</span>
+                            </div>
+                          )}
+                          {order.locationInfo && (
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span className="text-slate-500 text-[9px] font-sans uppercase">Coordinates</span>
+                              <a 
+                                href={`https://www.google.com/maps?q=${order.locationInfo.latitude},${order.locationInfo.longitude}`} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-amber-400 hover:text-amber-300 underline font-bold transition flex items-center gap-0.5"
+                                title="Open in Google Maps to locate reseller sitting environment"
+                              >
+                                📍 {order.locationInfo.latitude?.toFixed(5)}, {order.locationInfo.longitude?.toFixed(5)} (Pin Google Maps)
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Item summaries list */}
                   <div className="mt-3.5 space-y-2.5">

@@ -224,6 +224,105 @@ _Powered by VELRIVA Automated Verification Portal_`;
     res.json({ success: true, message: 'OTP verified successfully' });
   });
 
+  // API Route: Send notification when a user logs in (to both customer and admin)
+  app.post('/api/whatsapp/notify-login', async (req, res) => {
+    let { name, phone } = req.body;
+    if (!phone) {
+      return res.status(400).json({ error: 'Phone is required' });
+    }
+
+    let cleanPhone = phone.replace(/\D/g, '');
+    if (cleanPhone.length === 10) {
+      cleanPhone = '91' + cleanPhone;
+    }
+
+    const userName = name || 'Partner';
+    const timestamp = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+
+    // Customer notification
+    const customerMsg = `🔐 *VELRIVA: ACCOUNT LOGIN ALERT*
+━━━━━━━━━━━━━━━━━━━━━
+Dear *${userName}*, your partner account was just accessed successfully.
+
+*Time:* ${timestamp}
+_If this login was not authorized by you, please reset your partner credentials immediately._
+━━━━━━━━━━━━━━━━━━━━━
+Have a prosperous business day!`;
+
+    // Admin notification
+    const adminMsg = `🔐 *ADMIN NOTICE: PARTNER LOGIN*
+━━━━━━━━━━━━━━━━━━━━━
+*Reseller Name:* ${userName}
+*Phone:* +${cleanPhone}
+*Time:* ${timestamp}
+━━━━━━━━━━━━━━━━━━━━━`;
+
+    const adminPhone = (process.env.VITE_ADMIN_WHATSAPP || '919690986010').replace(/\D/g, '');
+
+    try {
+      // Send to customer
+      await whatsappService.sendMessage(cleanPhone, customerMsg);
+      // Send to admin
+      await whatsappService.sendMessage(adminPhone, adminMsg);
+      res.json({ success: true, message: 'Login notifications sent in background' });
+    } catch (err: any) {
+      console.error('Failed to dispatch login notification:', err);
+      res.status(500).json({ error: 'Failed to dispatch notification', message: err.message });
+    }
+  });
+
+  // API Route: Send notification when a user registers (to both customer and admin)
+  app.post('/api/whatsapp/notify-register', async (req, res) => {
+    let { name, phone } = req.body;
+    if (!phone) {
+      return res.status(400).json({ error: 'Phone is required' });
+    }
+
+    let cleanPhone = phone.replace(/\D/g, '');
+    if (cleanPhone.length === 10) {
+      cleanPhone = '91' + cleanPhone;
+    }
+
+    const userName = name || 'New Partner';
+    const timestamp = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+
+    // Customer notification
+    const customerMsg = `🎉 *WELCOME TO VELRIVA!*
+━━━━━━━━━━━━━━━━━━━━━
+Dear *${userName}*, welcome to the premium VELRIVA Dropshipping & Wholesale B2B portal!
+
+Your registration has been verified and set up successfully.
+• *Your Username:* +${cleanPhone}
+• *Setup Date:* ${timestamp}
+
+🔑 Use your security passcode to log in any time to book orders, trace tracking numbers, and view special bulk pricing list.
+━━━━━━━━━━━━━━━━━━━━━
+_Grow your dropshipping operations with Velriva B2B network_`;
+
+    // Admin notification
+    const adminMsg = `🎉 *ADMIN NOTICE: NEW SIGNUP!*
+━━━━━━━━━━━━━━━━━━━━━
+A brand new partner has registered on Velriva!
+
+*Partner Name:* ${userName}
+*Mobile Number:* +${cleanPhone}
+*Setup Date:* ${timestamp}
+━━━━━━━━━━━━━━━━━━━━━`;
+
+    const adminPhone = (process.env.VITE_ADMIN_WHATSAPP || '919690986010').replace(/\D/g, '');
+
+    try {
+      // Send to customer
+      await whatsappService.sendMessage(cleanPhone, customerMsg);
+      // Send to admin
+      await whatsappService.sendMessage(adminPhone, adminMsg);
+      res.json({ success: true, message: 'Signup notifications sent in background' });
+    } catch (err: any) {
+      console.error('Failed to dispatch signup notification:', err);
+      res.status(500).json({ error: 'Failed to dispatch notification', message: err.message });
+    }
+  });
+
   // Mount Vite developer middleware for rendering React SPA path in development mode
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({

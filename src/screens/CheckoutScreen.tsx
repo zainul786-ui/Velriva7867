@@ -42,6 +42,25 @@ export const CheckoutScreen: React.FC = () => {
 
   const [geoLoading, setGeoLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [geoCoords, setGeoCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [clientIp, setClientIp] = useState<string>('');
+
+  useEffect(() => {
+    let isMounted = true;
+    fetch('https://api.ipify.org?format=json')
+      .then(res => res.json())
+      .then(data => {
+        if (isMounted && data.ip) {
+          setClientIp(data.ip);
+        }
+      })
+      .catch(err => {
+        console.warn("Client IP fetch exception:", err);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const discountRate = appliedCoupon ? appliedCoupon.discount : 0;
   const discountAmount = Math.round(subtotal * (discountRate / 100));
@@ -73,6 +92,7 @@ export const CheckoutScreen: React.FC = () => {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
+        setGeoCoords({ latitude, longitude });
         try {
           const response = await fetch(
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=en`,
@@ -149,8 +169,13 @@ export const CheckoutScreen: React.FC = () => {
       return;
     }
 
-    // Submit Cash on Delivery order
-    const orderDetails = placeOrder(formData);
+    // Submit Cash on Delivery order with user geolocation, device, and client IP metadata
+    const orderDetails = placeOrder(
+      formData,
+      geoCoords || undefined,
+      undefined, // auto-detected inside AppContext
+      clientIp || undefined
+    );
     
     // Jump straight to success screen with param
     navigateTo('success', { order: orderDetails });

@@ -23,6 +23,15 @@ class WhatsAppService {
   private phoneNumber: string | null = null;
   private authState: any = null;
   private saveCreds: () => Promise<void> = async () => {};
+  private onConnectCallbacks: (() => void)[] = [];
+
+  public onConnect(callback: () => void) {
+    this.onConnectCallbacks.push(callback);
+    // If we're already connected, instantly trigger it
+    if (this.status === 'connected') {
+      try { callback(); } catch (e) { console.error('Error invoking connect callback:', e); }
+    }
+  }
 
   public async init() {
     this.status = 'connecting';
@@ -97,6 +106,13 @@ class WhatsAppService {
             this.phoneNumber = rawId.split(':')[0];
           }
           console.log(`✅ WhatsApp successfully connected! Username/Number: ${this.phoneNumber}`);
+
+          // Execute registered connect callbacks
+          setTimeout(() => {
+            this.onConnectCallbacks.forEach(cb => {
+              try { cb(); } catch (err) { console.error('Error invoking connect callback:', err); }
+            });
+          }, 1000);
         }
       });
     } catch (err) {

@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { whatsappService } from './whatsapp';
 import * as dotenv from 'dotenv';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // Load environmental variables
 dotenv.config();
@@ -56,8 +58,13 @@ class SupabaseWatcher {
       // Start fallback interval polling (Robust 10-second sync backup)
       this.startPollingLoop();
 
+      // Register automatic connection trigger to sync outstanding unnotified orders
+      whatsappService.onConnect(() => {
+        this.syncAllUnnotifiedOrders();
+      });
+
       this.isInitialized = true;
-      console.log('✅ Supabase Watcher daemon compiled and synced with Supabase db.');
+      console.log('✅ Supabase Watcher daemon compiled and registered onConnect listener with Baileys.');
     } catch (err: any) {
       console.error('❌ Failed to bootsup Supabase background client:', err.message || err);
     }
@@ -184,12 +191,12 @@ class SupabaseWatcher {
   }
 
   /**
-   * Formats and dispatches a highly polished WhatsApp message for a newly captured order row.
+   * Formats and dispatches highly polished WhatsApp messages to both Admin and Customer for new orders, and caches them.
    */
   private async handleNewOrderRow(order: any, source: string) {
     const orderId = order.id;
     if (this.seenOrderIds.has(orderId)) {
-      return; // Safeguard to prevent multiple dispatches
+      return; // Safeguard to prevent multiple memory dispatches
     }
 
     // Mark as processed instantly to handle thread safety
@@ -227,6 +234,7 @@ class SupabaseWatcher {
           }).join('\n')
         : '• Details unavailable';
 
+      // 1. Send admin message
       const waTextBody = `📦 *SUPABASE WATCHER: NEW ORDER RECEIVED!*
 ━━━━━━━━━━━━━━━━━━━━━
 *Order ID:* \`${orderId}\`
@@ -247,15 +255,137 @@ ${itemsListString}
 ⚙️ _Auto-synced & processed via Google AI Studio Background Worker_`;
 
       console.log(`✉️ Dispatching WhatsApp notification to target admin: ${targetNumber}...`);
-      const success = await whatsappService.sendMessage(targetNumber, waTextBody);
+      const successAdmin = await whatsappService.sendMessage(targetNumber, waTextBody);
 
-      if (success) {
-        console.log(`🎉 Successfully sent notification for Order ID: ${orderId}`);
+      if (successAdmin) {
+        console.log(`🎉 Successfully sent Admin notification for Order ID: ${orderId}`);
       } else {
-        console.warn(`💔 WhatsApp bot is not authenticated active connected yet. Skipping message for: ${orderId}`);
+        console.warn(`💔 WhatsApp bot is not authenticated active connected yet. Skipping admin message for: ${orderId}`);
       }
+
+      // 2. Send customer message
+      const customerNumber = customerPhone.replace(/\D/g, '');
+      if (customerNumber && customerNumber.length >= 10) {
+        let cleanCustomer = customerNumber;
+        if (cleanCustomer.length === 10) {
+          cleanCustomer = '91' + cleanCustomer;
+        }
+
+        const customerTextBody = `📦 *VELRIVA: ORDER CONFIRMED!*
+━━━━━━━━━━━━━━━━━━━━━
+Dear *${customerName}*, your order has been successfully placed with Velriva dropship network!
+
+*Order ID:* \`${orderId}\`
+*Order Date/Time:* ${dateString}
+
+🛒 *ORDER ITEMS*
+${itemsListString}
+
+💰 *TOTAL PAYABLE (COD)*
+• *Grand Total:* ₹${total}
+
+📍 *DELIVERY ADDRESS*
+• ${fullAddress || 'Not Provided'}
+━━━━━━━━━━━━━━━━━━━━━
+Thank you for partnering with Velriva! Tracking links will trigger as soon as processed.`;
+
+        console.log(`✉️ Dispatching WhatsApp notification to customer: ${cleanCustomer}...`);
+        const successCustomer = await whatsappService.sendMessage(cleanCustomer, customerTextBody);
+        if (successCustomer) {
+          console.log(`🎉 Successfully sent Customer notification for Order ID: ${orderId}`);
+        }
+      }
+
+      // 3. Persistent File Cache marking
+      try {
+        const notifiedFilePath = path.join(process.cwd(), 'auth_session', 'notified_orders.json');
+        let notifiedList: string[] = [];
+        if (fs.existsSync(notifiedFilePath)) {
+          const content = fs.readFileSync(notifiedFilePath, 'utf8');
+          const parsed = JSON.parse(content);
+          if (Array.isArray(parsed)) notifiedList = parsed;
+        }
+        if (!notifiedList.includes(String(orderId))) {
+          notifiedList.push(String(orderId));
+          fs.writeFileSync(notifiedFilePath, JSON.stringify(notifiedList, null, 2), 'utf8');
+        }
+      } catch (cacheErr) {
+        console.error('Error writing order ID cache file:', cacheErr);
+      }
+
     } catch (err: any) {
       console.error(`❌ Failed to process and message order: ${orderId}:`, err.message || err);
+    }
+  }
+
+  /**
+   * Scan recent orders from Supabase and dispatch notifications
+   * for any order that has not been flagged as notified.
+   */
+  public async syncAllUnnotifiedOrders() {
+    console.log('🔄 [O-SYNC] Running WhatsApp connection scan for outstanding unnotified orders...');
+    if (!this.supabaseClient) {
+      console.warn('⚠️ Supabase client not initialized yet. Skipping sync.');
+      return;
+    }
+
+    try {
+      const notifiedFilePath = path.join(process.cwd(), 'auth_session', 'notified_orders.json');
+      let notifiedSet = new Set<string>();
+
+      if (fs.existsSync(notifiedFilePath)) {
+        try {
+          const content = fs.readFileSync(notifiedFilePath, 'utf8');
+          const list = JSON.parse(content);
+          if (Array.isArray(list)) {
+            notifiedSet = new Set(list.map(String));
+          }
+        } catch (e) {
+          console.error('Error reading notified_orders.json:', e);
+        }
+      }
+
+      // Fetch last 20 orders
+      const { data: recentOrders, error } = await this.supabaseClient
+        .from('orders')
+        .select('*')
+        .order('date', { ascending: false })
+        .limit(20);
+
+      if (error) {
+        throw error;
+      }
+
+      if (!recentOrders || recentOrders.length === 0) {
+        console.log('🔄 [O-SYNC] No recent orders found in Supabase database.');
+        return;
+      }
+
+      console.log(`🔄 [O-SYNC] Auditing ${recentOrders.length} recent orders against notified cache...`);
+      let dispatchedCount = 0;
+
+      for (const order of recentOrders) {
+        const oId = String(order.id);
+        if (!notifiedSet.has(oId)) {
+          console.log(`🚀 [O-SYNC] Order ID ${oId} is unnotified. Dispatching to customer & admin!`);
+          
+          // Send notification!
+          await this.handleNewOrderRow(order, 'CONNECT-SYNC');
+          
+          // Add to notified set
+          notifiedSet.add(oId);
+          dispatchedCount++;
+
+          // Cooldown between messages to prevent spam blocking
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
+
+      // Save updated list back to file
+      fs.writeFileSync(notifiedFilePath, JSON.stringify(Array.from(notifiedSet), null, 2), 'utf8');
+      console.log(`🎉 [O-SYNC] Audit complete. Dispatched ${dispatchedCount} outstanding orders to WhatsApp!`);
+    } catch (e: any) {
+      console.error('❌ [O-SYNC] Error during pending orders sync:', e.message || e);
     }
   }
 }

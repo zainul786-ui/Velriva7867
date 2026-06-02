@@ -88,6 +88,11 @@ _Marketed by Velriva Dropshipping Network_` : '';
   const [selectedImage, setSelectedImage] = useState(product.image);
   const [selectedSize, setSelectedSize] = useState<string>(product.sizes?.[0] || '');
   const [selectedColor, setSelectedColor] = useState<string>(product.colors?.[0]?.name || '');
+  const [isDescExpanded, setIsDescExpanded] = useState(false);
+
+  // Touch Swipe coordinates
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
   // Sync selected image if product changes
   useEffect(() => {
@@ -117,6 +122,29 @@ _Marketed by Velriva Dropshipping Network_` : '';
     setSelectedImage(slideshowImages[nextIdx]);
   };
 
+  // Swipe gesture callbacks
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 55;
+    const isRightSwipe = distance < -55;
+    if (isLeftSwipe) {
+      handleNextImage();
+    } else if (isRightSwipe) {
+      handlePrevImage();
+    }
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
+
   // Filter out same category as related items
   const relatedProducts = products.filter(p => p.category === product.category && p.id !== product.id);
 
@@ -131,23 +159,20 @@ _Marketed by Velriva Dropshipping Network_` : '';
 
   return (
     <div id="product-details-container" className="pb-32 pt-2 bg-slate-50">
-      {/* 1. Large Image Canvas Display */}
-      <div className="relative bg-white aspect-[4/5] overflow-hidden border-b border-slate-100">
-        <img
-          src={selectedImage}
-          alt={product.name}
-          className="mx-auto h-full w-full object-cover select-none"
-          referrerPolicy="no-referrer"
-        />
-
-        {/* Floating Back Button */}
-        <button
-          id="product-back-btn"
-          onClick={() => navigateTo('home')}
-          className="absolute top-4 left-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-slate-850 shadow-md backdrop-blur-md transition hover:bg-white active:scale-95 cursor-pointer"
+      {/* 1. Large Image Canvas Display (Contained Designed Box) */}
+      <div className="px-3 pt-1">
+        <div 
+          className="relative mx-auto w-full aspect-square max-h-[300px] bg-white rounded-3xl border border-slate-200/80 shadow-[0_4px_12px_rgba(0,0,0,0.03)] overflow-hidden flex items-center justify-center transition duration-300 hover:shadow-md"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
         >
-          <ArrowLeft className="h-4.5 w-4.5" />
-        </button>
+          <img
+            src={selectedImage}
+            alt={product.name}
+            className="max-h-full max-w-full object-contain p-3 select-none transition duration-300"
+            referrerPolicy="no-referrer"
+          />
 
         {/* Carousel Prev Slide Arrow */}
         {slideshowImages.length > 1 && (
@@ -207,6 +232,7 @@ _Marketed by Velriva Dropshipping Network_` : '';
           <Share2 className="h-4.5 w-4.5" />
         </button>
       </div>
+    </div>
 
       {/* 2. Horizontal Image Carousel Thumbs */}
       {slideshowImages.length > 1 && (
@@ -345,10 +371,34 @@ _Marketed by Velriva Dropshipping Network_` : '';
 
       {/* 5. Descriptions Accordion */}
       <div className="mt-4 px-4 py-4 bg-white rounded-3xl mx-3 shadow-[0_1px_4px_0_rgba(15,23,42,0.02)]">
-        <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">Product Overview</h4>
-        <p className="mt-2 text-xs text-slate-600 leading-relaxed font-medium">
-          {product.description}
-        </p>
+        <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">Product Specifications</h4>
+        <div id="product-overview-bullets-list" className="mt-3.5 space-y-2.5">
+          {(() => {
+            const rawLines = product.description.split(/[\n•▪︎○●]+/).map(line => line.trim()).filter(Boolean);
+            const displayLines = isDescExpanded ? rawLines : rawLines.slice(0, 3);
+            
+            return (
+              <>
+                {displayLines.map((cleanLine, idx) => (
+                  <div key={idx} className="text-xs text-slate-600 leading-relaxed font-medium flex items-start gap-2 border-b border-dashed border-slate-100/60 pb-1.5 last:border-0">
+                    <span className="text-amber-500 mt-0.5 select-none shrink-0 text-sm">▪</span>
+                    <span className="flex-1">{cleanLine}</span>
+                  </div>
+                ))}
+                
+                {rawLines.length > 3 && (
+                  <button
+                    type="button"
+                    onClick={() => setIsDescExpanded(!isDescExpanded)}
+                    className="w-full mt-2 w-full flex items-center justify-center gap-1.5 py-2.5 text-[10.5px] font-sans font-black uppercase tracking-wider text-indigo-600 border border-indigo-100 bg-indigo-50/20 hover:bg-indigo-50/50 rounded-xl transition cursor-pointer active:scale-97 select-none"
+                  >
+                    <span>{isDescExpanded ? "Reduce / Chhota karein ▲" : `Read More (${rawLines.length - 3} More Specs) ▼`}</span>
+                  </button>
+                )}
+              </>
+            );
+          })()}
+        </div>
 
         {/* Custom safety trust labels */}
         <div className="mt-4.5 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3 text-[10.5px] font-bold text-slate-600">
