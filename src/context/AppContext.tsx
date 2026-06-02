@@ -472,6 +472,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Helper to show custom micro toast
   const showToast = (message: string, type: 'success' | 'info' | 'error' = 'success') => {
     setToast({ message, type });
+
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification('VELRIVA Updates', {
+          body: message,
+          icon: '/icon.svg'
+        });
+      } catch (err) {
+        console.debug('Failed to send native notification', err);
+      }
+    }
   };
 
   useEffect(() => {
@@ -1790,6 +1801,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('Logged out of Admin Dashboard', 'info');
   };
 
+  // Request native browser notifications permission on mount
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      setTimeout(() => {
+        Notification.requestPermission().catch(err => {
+          console.debug('Native notification request was ignored or blocked', err);
+        });
+      }, 4000);
+    }
+  }, []);
+
   // Notifications logic
   const addNotification = (title: string, body: string) => {
     const newNotif: AppNotification = {
@@ -1802,6 +1824,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const updated = [newNotif, ...notifications];
     setNotifications(updated);
     localStorage.setItem('velriva_notifications', JSON.stringify(updated));
+
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification(title, {
+          body: body,
+          icon: '/icon.svg'
+        });
+      } catch (err) {
+        console.debug('Failed to send native notification', err);
+      }
+    }
   };
 
   const markNotificationsAsRead = () => {

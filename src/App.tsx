@@ -3,7 +3,6 @@ import { AppProvider, useAppState } from './context/AppContext';
 import { Header } from './components/Header';
 import { BottomNavigation } from './components/BottomNavigation';
 import { WhatsAppButton } from './components/WhatsAppButton';
-import { InstallPrompt } from './components/InstallPrompt';
 import { Toast } from './components/Toast';
 
 // Screens imports - exact matches with files created
@@ -211,7 +210,6 @@ const AppContent: React.FC = () => {
       {/* 3. Utilities, Bottom Bars, floating prompts */}
       {!hideChrome && navigation.currentScreen !== 'productDetails' && <BottomNavigation />}
       {!hideChrome && <WhatsAppButton />}
-      {!hideChrome && <InstallPrompt />}
       <Toast />
 
       {/* 4. Delivered Product Rating Pop-Over Modal */}

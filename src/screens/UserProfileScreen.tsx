@@ -264,7 +264,7 @@ export const UserProfileScreen: React.FC = () => {
           </div>
 
           {/* Admin Area Bridge */}
-          {(currentUser?.email === 'velriva7867@gmail.com' || currentUser?.email === 'velora068@gmail.com' || currentUser?.email === 'zainulamaan4@gmail.com' || isAdmin) && (
+          {(currentUser?.isLoggedIn && currentUser?.email === 'zainulamaan4@gmail.com') && (
             <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-amber-100/50 border border-amber-200">
               <div className="flex items-center justify-between">
                 <div>

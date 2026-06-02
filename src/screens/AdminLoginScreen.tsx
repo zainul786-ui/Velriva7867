@@ -13,7 +13,7 @@ export const AdminLoginScreen: React.FC = () => {
     e.preventDefault();
 
     const normalizedUser = username.trim().toLowerCase();
-    if ((normalizedUser === 'velriva7867@gmail.com' || normalizedUser === 'velora068@gmail.com') && (password === 'velriva@786' || password === 'velriva7867' || password === 'velora@786')) {
+    if (normalizedUser === 'zainulamaan4@gmail.com' && (password === 'velriva@786' || password === 'zainul@786' || password === 'velriva7867' || password === 'zainulamaan4')) {
       const success = loginAdmin();
       if (success) {
         navigateTo('adminDashboard');
@@ -22,13 +22,6 @@ export const AdminLoginScreen: React.FC = () => {
       setErrorMsg('Invalid administrative credentials keys. Try again.');
       showToast('Admin verification failed.', 'error');
     }
-  };
-
-  // Quick helper to fill in simulation keys instantly for the user review!
-  const handleAutofillSimulatorCredentials = () => {
-    setUsername('velriva7867@gmail.com');
-    setPassword('velriva@786');
-    setErrorMsg('');
   };
 
   return (
@@ -55,30 +48,6 @@ export const AdminLoginScreen: React.FC = () => {
           </p>
         </div>
 
-        {/* Callout box displaying simulation credentials */}
-        <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4 space-y-2">
-          <div className="flex items-center gap-1.5 text-xs font-black text-amber-800">
-            <ShieldAlert className="h-4.5 w-4.5 shrink-0" />
-            <span>Review Demonstration Keys</span>
-          </div>
-          <p className="text-[10.5px] text-slate-600 leading-normal font-medium">
-            To view the full inventory CRUD, orders and graphs, use these credentials or tap the autofill simulator helper button below.
-          </p>
-          <div className="flex flex-col gap-1.5 bg-white border border-amber-100 rounded-xl px-3 py-2 text-[10.5px] font-mono leading-none font-bold text-slate-700">
-            <div>Email: <strong className="text-slate-950">velriva7867@gmail.com</strong></div>
-            <div>Password: <strong className="text-slate-950">velriva@786</strong></div>
-          </div>
-
-          <button
-            id="autofill-credentials-helper"
-            type="button"
-            onClick={handleAutofillSimulatorCredentials}
-            className="w-full mt-2 rounded-xl bg-amber-400 hover:bg-amber-350 text-slate-950 py-2 text-[10.5px] font-black tracking-wide"
-          >
-            One-Tap Autofill Simulation
-          </button>
-        </div>
-
         {/* Inputs */}
         <form onSubmit={handleAdminVerifySubmit} className="space-y-4 pt-1">
           <div>
@@ -88,7 +57,7 @@ export const AdminLoginScreen: React.FC = () => {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="e.g. Velriva7867@gmail.com"
+              placeholder="e.g. zainulamaan4@gmail.com"
               className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-xs font-bold text-slate-800 placeholder-slate-400 focus:border-slate-800 focus:outline-hidden"
             />
           </div>
