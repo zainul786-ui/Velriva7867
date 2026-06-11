@@ -13,7 +13,7 @@ export const AdminLoginScreen: React.FC = () => {
     e.preventDefault();
 
     const normalizedUser = username.trim().toLowerCase();
-    if (normalizedUser === 'zainulamaan4@gmail.com' && (password === 'velriva@786' || password === 'zainul@786' || password === 'velriva7867' || password === 'zainulamaan4')) {
+    if ((normalizedUser === 'zainulamaan4@gmail.com' || normalizedUser === 'aryandivakir@gmail.com') && (password === 'velriva@786' || password === 'zainul@786' || password === 'velriva7867' || password === 'zainulamaan4')) {
       const success = loginAdmin();
       if (success) {
         navigateTo('adminDashboard');
@@ -57,7 +57,7 @@ export const AdminLoginScreen: React.FC = () => {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="e.g. zainulamaan4@gmail.com"
+              placeholder="e.g. zainulamaan4@gmail.com or aryandivakir@gmail.com"
               className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-xs font-bold text-slate-800 placeholder-slate-400 focus:border-slate-800 focus:outline-hidden"
             />
           </div>

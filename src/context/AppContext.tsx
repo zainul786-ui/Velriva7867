@@ -299,11 +299,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // User session
     const storedUser = localStorage.getItem('velriva_user');
-    if (storedUser) setCurrentUser(JSON.parse(storedUser));
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setCurrentUser(parsedUser);
+        if (parsedUser && parsedUser.isLoggedIn && parsedUser.email) {
+          const uEmail = parsedUser.email.trim().toLowerCase();
+          if (uEmail === 'zainulamaan4@gmail.com' || uEmail === 'aryandivakir@gmail.com') {
+            setIsAdmin(true);
+            localStorage.setItem('velriva_admin_logged_in', 'true');
+          }
+        }
+      } catch (e) {
+        console.warn("Could not parse stored session:", e);
+      }
+    }
 
     // Admin state
     const storedAdmin = localStorage.getItem('velriva_admin_logged_in');
-    if (storedAdmin === 'true') setIsAdmin(true);
+    if (storedAdmin === 'true' || (storedUser && (() => {
+      try {
+        const u = JSON.parse(storedUser);
+        return u && u.isLoggedIn && (u.email?.trim().toLowerCase() === 'zainulamaan4@gmail.com' || u.email?.trim().toLowerCase() === 'aryandivakir@gmail.com');
+      } catch { return false; }
+    })())) {
+      setIsAdmin(true);
+    }
 
     // Notifications
     const storedNotifications = localStorage.getItem('velriva_notifications');
@@ -353,13 +374,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         cart: [],
         wishlist: [],
         orders: []
+      },
+      {
+        id: 'usr_aryan',
+        name: 'Aryan Divakir',
+        email: 'aryandivakir@gmail.com',
+        phone: '+91 9196909860',
+        password: 'velriva@786',
+        cart: [],
+        wishlist: [],
+        orders: []
       }
     ];
     if (storedAccounts) {
       try {
         const parsed = JSON.parse(storedAccounts);
         const migrated = parsed.map((acc: any) => {
-          if (acc.email === 'zainulamaan4@gmail.com' && (acc.password === 'password123' || !acc.password)) {
+          if ((acc.email === 'zainulamaan4@gmail.com' || acc.email === 'aryandivakir@gmail.com') && (acc.password === 'password123' || !acc.password)) {
             return { ...acc, password: 'velriva@786' };
           }
           return acc;
@@ -1333,6 +1364,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setCurrentUser(user);
         localStorage.setItem('velriva_user', JSON.stringify(user));
 
+        if (user.email) {
+          const checkEmail = user.email.trim().toLowerCase();
+          if (checkEmail === 'zainulamaan4@gmail.com' || checkEmail === 'aryandivakir@gmail.com') {
+            setIsAdmin(true);
+            localStorage.setItem('velriva_admin_logged_in', 'true');
+          }
+        }
+
         // Fetch user historic orders from Supabase orders table
         const { data: userOrders, error: ordersErr } = await supabase
           .from('orders')
@@ -1401,6 +1440,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     setCurrentUser(user);
     localStorage.setItem('velriva_user', JSON.stringify(user));
+
+    if (user.email) {
+      const checkEmail = user.email.trim().toLowerCase();
+      if (checkEmail === 'zainulamaan4@gmail.com' || checkEmail === 'aryandivakir@gmail.com') {
+        setIsAdmin(true);
+        localStorage.setItem('velriva_admin_logged_in', 'true');
+      }
+    }
 
     // Restore user's saved items & orders!
     setCart(account.cart || []);
